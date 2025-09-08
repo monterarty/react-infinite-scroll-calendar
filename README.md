@@ -1,46 +1,310 @@
-# Getting Started with Create React App
+# React Infinite Scroll Calendar
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Modern React calendar component with Radix UI-style primitives. Full control over styling and behavior with compound components pattern.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+✨ **Radix UI-style Architecture** - Compound components for maximum flexibility  
+🎨 **Data Attributes** - Easy styling with `data-selected`, `data-disabled`, `data-today`  
+⚡ **TypeScript First** - Complete type safety and IntelliSense support  
+🎯 **Headless Hook** - Use `useCalendar` for custom implementations  
+📱 **Responsive** - Works on desktop and mobile  
+🌍 **i18n Ready** - Configurable locales and date formats  
 
-### `npm start`
+## Installation
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### From GitHub
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+```bash
+npm install monterarty/react-infinite-scroll-calendar
+```
 
-### `npm test`
+Or with yarn:
+```bash
+yarn add monterarty/react-infinite-scroll-calendar
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Peer Dependencies
 
-### `npm run build`
+Make sure you have React 16.8+ installed:
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```bash
+npm install react react-dom
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Quick Start
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```tsx
+import React, { useState } from 'react';
+import { Calendar, DateRange } from 'react-infinite-scroll-calendar';
 
-### `npm run eject`
+function MyCalendar() {
+  const [dateRange, setDateRange] = useState<DateRange>({ 
+    start: null, 
+    end: null 
+  });
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+  return (
+    <Calendar.Root 
+      value={dateRange} 
+      onChange={setDateRange}
+      selectionMode="range"
+      locale="ru-RU"
+    >
+      {({ state, actions }) => (
+        <div className="calendar-container">
+          {/* Header with navigation */}
+          <Calendar.Header className="calendar-header">
+            {({ currentMonth }) => (
+              <div>
+                <h3>{currentMonth?.monthName}</h3>
+                <div>
+                  <button onClick={() => actions.setSelectionMode('single')}>
+                    Single
+                  </button>
+                  <button onClick={() => actions.setSelectionMode('range')}>
+                    Range
+                  </button>
+                  <button onClick={actions.clearSelection}>
+                    Clear
+                  </button>
+                </div>
+              </div>
+            )}
+          </Calendar.Header>
+          
+          {/* Weekday labels */}
+          <Calendar.Weekdays className="calendar-weekdays">
+            {({ weekdays }) => (
+              <div className="weekdays-grid">
+                {weekdays.map((day, idx) => (
+                  <div key={idx}>{day}</div>
+                ))}
+              </div>
+            )}
+          </Calendar.Weekdays>
+          
+          {/* Scrollable calendar grid */}
+          <Calendar.Grid className="calendar-grid">
+            {({ months }) => (
+              <div>
+                {months.map(month => (
+                  <Calendar.Month key={`${month.year}-${month.month}`} month={month}>
+                    {({ month }) => (
+                      <div>
+                        <h4>{month.monthName}</h4>
+                        <div className="days-grid">
+                          {month.days.map((day, idx) => (
+                            <Calendar.Day key={idx} date={day}>
+                              {({ dayNumber, isDisabled, isSelected, isToday }) => (
+                                <button
+                                  disabled={isDisabled}
+                                  data-selected={isSelected}
+                                  data-today={isToday}
+                                  data-disabled={isDisabled}
+                                >
+                                  {dayNumber}
+                                </button>
+                              )}
+                            </Calendar.Day>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </Calendar.Month>
+                ))}
+              </div>
+            )}
+          </Calendar.Grid>
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+          {/* Selection info */}
+          <Calendar.SelectionInfo className="selection-info">
+            {({ selectedRange, formatDate }) => (
+              <div>
+                {selectedRange.start ? (
+                  <span>
+                    {formatDate(selectedRange.start)}
+                    {selectedRange.end && ` — ${formatDate(selectedRange.end)}`}
+                  </span>
+                ) : (
+                  'Select dates'
+                )}
+              </div>
+            )}
+          </Calendar.SelectionInfo>
+        </div>
+      )}
+    </Calendar.Root>
+  );
+}
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+## Styling with Data Attributes
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+The component provides data attributes for easy CSS styling:
 
-## Learn More
+```css
+/* Selected dates */
+[data-selected] { 
+  background: #3b82f6; 
+  color: white; 
+}
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+/* Disabled dates */
+[data-disabled] { 
+  opacity: 0.5; 
+  cursor: not-allowed; 
+}
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+/* Today */
+[data-today] { 
+  outline: 2px solid #fbbf24; 
+}
+
+/* In range (for range selection) */
+[data-in-range] { 
+  background: #dbeafe; 
+}
+
+/* Range end dates */
+[data-range-end] { 
+  background: #1d4ed8; 
+  font-weight: bold; 
+}
+```
+
+## Headless Usage
+
+For complete custom UI, use the `useCalendar` hook:
+
+```tsx
+import { useCalendar } from 'react-infinite-scroll-calendar';
+
+function CustomCalendar() {
+  const calendar = useCalendar({
+    value: dateRange,
+    onChange: setDateRange,
+    selectionMode: 'range',
+    locale: 'en-US'
+  });
+
+  return (
+    <div>
+      <h2>{calendar.state.visibleMonths[0]?.monthName}</h2>
+      
+      {calendar.state.visibleMonths.map(month => (
+        <div key={month.monthName}>
+          {month.days.map((date, idx) => (
+            <button
+              key={idx}
+              onClick={() => date && calendar.actions.selectDate(date)}
+              disabled={calendar.helpers.isDateDisabled(date)}
+              style={{
+                background: calendar.helpers.isDateInRange(date) ? '#blue' : 'white'
+              }}
+            >
+              {date?.getDate()}
+            </button>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+## API Reference
+
+### Components
+
+- `Calendar.Root` - Main wrapper component
+- `Calendar.Header` - Header with month info and actions
+- `Calendar.Weekdays` - Weekday labels
+- `Calendar.Grid` - Scrollable calendar container
+- `Calendar.Month` - Individual month
+- `Calendar.Day` - Individual day button
+- `Calendar.SelectionInfo` - Selection display
+
+### Props
+
+#### CalendarProps
+
+```tsx
+interface CalendarProps {
+  selectionMode?: 'single' | 'range';
+  defaultValue?: DateRange;
+  value?: DateRange;
+  onChange?: (value: DateRange) => void;
+  minDate?: Date;
+  maxDate?: Date;
+  disabledDates?: Date[];
+  disabledDays?: number[]; // 0 = Sunday, 6 = Saturday
+  locale?: string;
+  weekStartsOn?: 0 | 1;
+  monthNames?: string[];
+  dayNames?: string[];
+  monthBuffer?: { before: number; after: number };
+}
+```
+
+#### DateRange
+
+```tsx
+interface DateRange {
+  start: Date | null;
+  end: Date | null;
+}
+```
+
+### Hooks
+
+- `useCalendar(props: CalendarProps)` - Main calendar logic
+
+## Examples
+
+Check out the `/example` directory for complete implementation examples including:
+
+- Primitive Components (Radix Style)
+- Headless Hook Usage
+- Custom Styling Examples
+
+## Development
+
+```bash
+# Clone the repository
+git clone https://github.com/monterarty/react-infinite-scroll-calendar.git
+
+# Install dependencies
+npm install
+
+# Build the library
+npm run build
+
+# Run example
+cd example
+npm install
+npm start
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+MIT © [monterarty](https://github.com/monterarty)
+
+## Changelog
+
+### 1.0.0
+- Initial release
+- Radix UI-style compound components
+- Data attributes for styling
+- TypeScript support
+- Headless `useCalendar` hook
+- Infinite scroll functionality
+- i18n support

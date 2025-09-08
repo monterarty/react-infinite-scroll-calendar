@@ -1,0 +1,373 @@
+import React, { createContext, useContext, forwardRef } from 'react';
+import { useCalendar } from '../headless/useCalendar';
+import { CalendarProps, CalendarRenderProps } from '../types';
+
+const cn = (...classes: Array<string | undefined | null | false>) => {
+  return classes.filter(Boolean).join(' ');
+};
+
+type RenderFunction<T = any> = (props: T) => React.ReactNode;
+
+interface CalendarContextValue extends CalendarRenderProps {
+  weekdays: string[];
+}
+
+const CalendarContext = createContext<CalendarContextValue | null>(null);
+
+const useCalendarContext = (): CalendarContextValue => {
+  const context = useContext(CalendarContext);
+  if (!context) {
+    throw new Error('Calendar components must be used within Calendar.Root');
+  }
+  return context;
+};
+
+interface CalendarRootProps extends CalendarProps {
+  children?: React.ReactNode | RenderFunction<CalendarContextValue>;
+  className?: string;
+}
+
+const CalendarRoot = forwardRef<HTMLDivElement, CalendarRootProps>(
+  ({ children, className, ...calendarProps }, ref) => {
+    const calendar = useCalendar(calendarProps);
+    
+    const contextValue: CalendarContextValue = {
+      state: calendar.state,
+      actions: calendar.actions,
+      helpers: calendar.helpers,
+      props: calendar.props,
+      weekdays: calendar.weekdays
+    };
+
+    const content = typeof children === 'function' ? children(contextValue) : children;
+
+    return (
+      <CalendarContext.Provider value={contextValue}>
+        <div 
+          ref={ref} 
+          className={cn('calendar-root', className)}
+          data-calendar-root=""
+        >
+          {content}
+        </div>
+      </CalendarContext.Provider>
+    );
+  }
+);
+CalendarRoot.displayName = 'CalendarRoot';
+
+interface CalendarHeaderProps {
+  children?: React.ReactNode | RenderFunction<{
+    currentMonth: any;
+    actions: any;
+    canNavigatePrev: boolean;
+    canNavigateNext: boolean;
+  }>;
+  className?: string;
+}
+
+const CalendarHeader = forwardRef<HTMLDivElement, CalendarHeaderProps>(
+  ({ className, children }, ref) => {
+    const { state, actions } = useCalendarContext();
+    const currentMonth = state.visibleMonths[state.currentMonthIndex];
+    
+    const canNavigatePrev = state.currentMonthIndex > 0;
+    const canNavigateNext = state.currentMonthIndex < state.visibleMonths.length - 1;
+    
+    const headerProps = {
+      currentMonth,
+      actions,
+      canNavigatePrev,
+      canNavigateNext
+    };
+
+    const content = typeof children === 'function' ? children(headerProps) : children;
+
+    return (
+      <div
+        ref={ref}
+        className={cn('calendar-header', className)}
+        data-calendar-header=""
+      >
+        {content}
+      </div>
+    );
+  }
+);
+CalendarHeader.displayName = 'CalendarHeader';
+
+interface CalendarNavigationProps {
+  children?: React.ReactNode | RenderFunction<{
+    actions: any;
+    canNavigatePrev: boolean;
+    canNavigateNext: boolean;
+  }>;
+  className?: string;
+}
+
+const CalendarNavigation = forwardRef<HTMLDivElement, CalendarNavigationProps>(
+  ({ className, children }, ref) => {
+    const { state, actions } = useCalendarContext();
+    
+    const canNavigatePrev = state.currentMonthIndex > 0;
+    const canNavigateNext = state.currentMonthIndex < state.visibleMonths.length - 1;
+    
+    const navigationProps = {
+      actions,
+      canNavigatePrev,
+      canNavigateNext
+    };
+
+    const content = typeof children === 'function' ? children(navigationProps) : children;
+
+    return (
+      <div
+        ref={ref}
+        className={cn('calendar-navigation', className)}
+        data-calendar-navigation=""
+      >
+        {content}
+      </div>
+    );
+  }
+);
+CalendarNavigation.displayName = 'CalendarNavigation';
+
+interface CalendarWeekdaysProps {
+  children?: React.ReactNode | RenderFunction<{ weekdays: string[] }>;
+  className?: string;
+}
+
+const CalendarWeekdays = forwardRef<HTMLDivElement, CalendarWeekdaysProps>(
+  ({ className, children }, ref) => {
+    const { weekdays } = useCalendarContext();
+    
+    const weekdaysProps = { weekdays };
+    const content = typeof children === 'function' ? children(weekdaysProps) : children;
+
+    return (
+      <div
+        ref={ref}
+        className={cn('calendar-weekdays', className)}
+        data-calendar-weekdays=""
+      >
+        {content}
+      </div>
+    );
+  }
+);
+CalendarWeekdays.displayName = 'CalendarWeekdays';
+
+interface CalendarGridProps {
+  children?: React.ReactNode | RenderFunction<{
+    months: any[];
+    helpers: any;
+    actions: any;
+    state: any;
+  }>;
+  className?: string;
+}
+
+const CalendarGrid = forwardRef<HTMLDivElement, CalendarGridProps>(
+  ({ className, children }, ref) => {
+    const context = useCalendarContext();
+    
+    const gridProps = {
+      months: context.state.visibleMonths,
+      helpers: context.helpers,
+      actions: context.actions,
+      state: context.state
+    };
+
+    const content = typeof children === 'function' ? children(gridProps) : children;
+
+    return (
+      <div
+        ref={ref}
+        className={cn('calendar-grid', className)}
+        data-calendar-grid=""
+        {...context.props.containerProps}
+      >
+        {content}
+      </div>
+    );
+  }
+);
+CalendarGrid.displayName = 'CalendarGrid';
+
+interface CalendarMonthProps {
+  month: any;
+  children?: React.ReactNode | RenderFunction<{
+    month: any;
+    helpers: any;
+    actions: any;
+    state: any;
+  }>;
+  className?: string;
+}
+
+const CalendarMonth = forwardRef<HTMLDivElement, CalendarMonthProps>(
+  ({ month, className, children }, ref) => {
+    const { state, actions, helpers } = useCalendarContext();
+    
+    const monthProps = {
+      month,
+      helpers,
+      actions,
+      state
+    };
+
+    const content = typeof children === 'function' ? children(monthProps) : children;
+
+    return (
+      <div
+        ref={ref}
+        className={cn('calendar-month', className)}
+        data-calendar-month=""
+      >
+        {content}
+      </div>
+    );
+  }
+);
+CalendarMonth.displayName = 'CalendarMonth';
+
+interface CalendarDayProps {
+  date: Date | null;
+  children?: React.ReactNode | RenderFunction<{
+    date: Date | null;
+    isDisabled: boolean;
+    isSelected: boolean;
+    isInRange: boolean;
+    isRangeEnd: boolean;
+    isToday: boolean;
+    isHovered: boolean;
+    dayNumber: number | null;
+    actions: any;
+  }>;
+  className?: string;
+  disabled?: boolean;
+}
+
+const CalendarDay = forwardRef<HTMLButtonElement, CalendarDayProps>(
+  ({ date, className, children, disabled: disabledProp = false }, ref) => {
+    const { state, actions, helpers } = useCalendarContext();
+    
+    const isDisabled = disabledProp || helpers.isDateDisabled(date);
+    const isSelected = helpers.isDateInRange(date);
+    const isInRange = helpers.isDateInRange(date);
+    const isRangeEnd = helpers.isDateRangeEnd(date);
+    const isToday = helpers.isToday(date);
+    const isHovered = Boolean(date && state.hoveredDate?.toDateString() === date.toDateString());
+    
+    const dayProps = {
+      date,
+      isDisabled,
+      isSelected,
+      isInRange,
+      isRangeEnd,
+      isToday,
+      isHovered,
+      dayNumber: date ? date.getDate() : null,
+      actions
+    };
+
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (date && !isDisabled) {
+        actions.selectDate(date);
+      }
+    };
+
+    const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (date && !isDisabled && state.selectionMode === 'range' && state.selectedRange.start && !state.selectedRange.end) {
+        actions.setHoveredDate(date);
+      }
+    };
+
+    const handleMouseLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (state.selectionMode === 'range') {
+        actions.setHoveredDate(null);
+      }
+    };
+
+    const content = typeof children === 'function' ? children(dayProps) : children;
+
+    return (
+      <button
+        ref={ref}
+        className={cn('calendar-day', className)}
+        onClick={handleClick}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        disabled={isDisabled}
+        data-calendar-day=""
+        data-selected={isSelected || undefined}
+        data-disabled={isDisabled || undefined}
+        data-today={isToday || undefined}
+        data-in-range={isInRange || undefined}
+        data-range-end={isRangeEnd || undefined}
+      >
+        {content}
+      </button>
+    );
+  }
+);
+CalendarDay.displayName = 'CalendarDay';
+
+interface CalendarSelectionInfoProps {
+  children?: React.ReactNode | RenderFunction<{
+    selectedRange: any;
+    selectionMode: string;
+    daysInRange: number;
+    formatDate: (date: Date) => string;
+  }>;
+  className?: string;
+}
+
+const CalendarSelectionInfo = forwardRef<HTMLDivElement, CalendarSelectionInfoProps>(
+  ({ className, children }, ref) => {
+    const { state, helpers } = useCalendarContext();
+    
+    const selectionInfoProps = {
+      selectedRange: state.selectedRange,
+      selectionMode: state.selectionMode,
+      daysInRange: helpers.getDaysInRange(),
+      formatDate: helpers.formatDate
+    };
+
+    const content = typeof children === 'function' ? children(selectionInfoProps) : children;
+
+    return (
+      <div
+        ref={ref}
+        className={cn('calendar-selection-info', className)}
+        data-calendar-selection-info=""
+      >
+        {content}
+      </div>
+    );
+  }
+);
+CalendarSelectionInfo.displayName = 'CalendarSelectionInfo';
+
+export const Calendar = {
+  Root: CalendarRoot,
+  Header: CalendarHeader,
+  Navigation: CalendarNavigation,
+  Weekdays: CalendarWeekdays,
+  Grid: CalendarGrid,
+  Month: CalendarMonth,
+  Day: CalendarDay,
+  SelectionInfo: CalendarSelectionInfo,
+};
+
+export {
+  CalendarRoot,
+  CalendarHeader,
+  CalendarNavigation,
+  CalendarWeekdays,
+  CalendarGrid,
+  CalendarMonth,
+  CalendarDay,
+  CalendarSelectionInfo,
+};

@@ -39,13 +39,12 @@ export default defineConfig(({ command }) => {
         fileName: (format) => `index.${format === 'es' ? 'esm' : format}.js`
       },
       rollupOptions: {
-        external: ['react', 'react-dom', 'react/jsx-runtime', '@tanstack/react-virtual'],
+        external: ['react', 'react-dom', 'react/jsx-runtime'],
         output: {
           globals: {
             react: 'React',
             'react-dom': 'ReactDOM',
-            'react/jsx-runtime': 'jsxRuntime',
-            '@tanstack/react-virtual': 'ReactVirtual'
+            'react/jsx-runtime': 'jsxRuntime'
           }
         }
       },

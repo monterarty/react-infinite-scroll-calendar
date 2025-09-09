@@ -37,8 +37,10 @@
   "bugs": {
     "url": "https://github.com/monterarty/react-infinite-scroll-calendar/issues"
   },
+  "dependencies": {
+    "@tanstack/react-virtual": "^3.0.0"
+  },
   "peerDependencies": {
-    "@tanstack/react-virtual": "^3.0.0",
     "react": ">=16.8.0",
     "react-dom": ">=16.8.0"
   },

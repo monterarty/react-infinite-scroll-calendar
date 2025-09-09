@@ -65,35 +65,46 @@ export function useCalendar(props: CalendarProps) {
     const actualMinDate = minMonth || minDate;
     const actualMaxDate = maxMonth || maxDate;
 
-    for (let i = -monthBuffer.before; i <= monthBuffer.after; i++) {
-      const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
-      
-      // Проверяем, находится ли месяц в допустимом диапазоне
-      if (actualMinDate || actualMaxDate) {
-        const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-        const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
-        
-        if (actualMinDate && monthEnd < actualMinDate) {
-          continue;
-        }
-        if (actualMaxDate && monthStart > actualMaxDate) {
-          continue;
-        }
-      }
-      
-      const monthName = date.toLocaleDateString(locale, { month: 'long' });
-      const monthNameShort = date.toLocaleDateString(locale, { month: 'short' });
-      const monthYear = date.toLocaleDateString(locale, { year: 'numeric' });
+    let startDate: Date;
+    let endDate: Date;
+
+    if (actualMinDate && actualMaxDate) {
+      // Если заданы обе границы, используем их
+      startDate = new Date(actualMinDate.getFullYear(), actualMinDate.getMonth(), 1);
+      endDate = new Date(actualMaxDate.getFullYear(), actualMaxDate.getMonth(), 1);
+    } else if (actualMinDate) {
+      // Если задана только минимальная дата, генерируем вперед с буфером
+      startDate = new Date(actualMinDate.getFullYear(), actualMinDate.getMonth(), 1);
+      endDate = new Date(today.getFullYear(), today.getMonth() + monthBuffer.after, 1);
+    } else if (actualMaxDate) {
+      // Если задана только максимальная дата, генерируем назад с буфером
+      startDate = new Date(today.getFullYear(), today.getMonth() - monthBuffer.before, 1);
+      endDate = new Date(actualMaxDate.getFullYear(), actualMaxDate.getMonth(), 1);
+    } else {
+      // Если границы не заданы, используем буфер от текущей даты
+      startDate = new Date(today.getFullYear(), today.getMonth() - monthBuffer.before, 1);
+      endDate = new Date(today.getFullYear(), today.getMonth() + monthBuffer.after, 1);
+    }
+
+    // Генерируем месяцы от startDate до endDate
+    const currentDate = new Date(startDate);
+    while (currentDate <= endDate) {
+      const monthName = currentDate.toLocaleDateString(locale, { month: 'long' });
+      const monthNameShort = currentDate.toLocaleDateString(locale, { month: 'short' });
+      const monthYear = currentDate.toLocaleDateString(locale, { year: 'numeric' });
       
       months.push({
-        date,
-        month: date.getMonth(),
-        year: date.getFullYear(),
+        date: new Date(currentDate),
+        month: currentDate.getMonth(),
+        year: currentDate.getFullYear(),
         monthName,
         monthNameShort,
         monthYear,
-        days: getDaysInMonth(date.getFullYear(), date.getMonth())
+        days: getDaysInMonth(currentDate.getFullYear(), currentDate.getMonth())
       });
+
+      // Переходим к следующему месяцу
+      currentDate.setMonth(currentDate.getMonth() + 1);
     }
     
     return months;

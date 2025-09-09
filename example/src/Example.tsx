@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { 
   Calendar,
-  DateRange
+  DateRange,
+  CalendarMonth,
+  VirtualItem
 } from 'react-infinite-scroll-calendar';
 
 const cn = (...classes: Array<string | undefined | null | false>) => {
@@ -111,8 +113,8 @@ const Example: React.FC = () => {
               <Calendar.Grid className="h-80">
                 {({ months, virtual }) => (
                     <div style={{ height: virtual.totalSize, position: 'relative', width: '100%' }}>
-                      {virtual.virtualItems.map((virtualItem: any) => {
-                        const month = months[virtualItem.index];
+                      {virtual.virtualItems.map((virtualItem: VirtualItem) => {
+                        const month: CalendarMonth = months[virtualItem.index];
                         return (
                         <div
                           key={virtualItem.key}
@@ -130,8 +132,13 @@ const Example: React.FC = () => {
                           <Calendar.Month month={month}>
                             {({ month: monthData }) => (
                               <div className="p-2 h-full flex flex-col">
-                                <div className="text-center font-bold text-gray-800 mb-3 text-lg flex-shrink-0">
-                                  {monthData.monthName}
+                                <div className="text-center mb-3 flex-shrink-0">
+                                  <div className="font-bold text-gray-800 text-xl">
+                                    {monthData.monthName}
+                                  </div>
+                                  <div className="text-sm text-gray-500 font-medium">
+                                    {monthData.monthYear}
+                                  </div>
                                 </div>
                                 <div className="grid grid-cols-7 gap-1 flex-1">
                                   {monthData.days.map((day: Date | null, dayIdx: number) => (

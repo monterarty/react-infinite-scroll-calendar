@@ -12,7 +12,18 @@ export interface CalendarMonth {
   month: number;
   year: number;
   monthName: string;
+  monthNameShort: string;
+  monthYear: string;
   days: Array<Date | null>;
+}
+
+export interface VirtualItem {
+  index: number;
+  start: number;
+  size: number;
+  end: number;
+  key: string | number;
+  lane: number;
 }
 
 export interface CalendarState {
@@ -70,7 +81,7 @@ export interface CalendarRenderProps {
     containerProps: React.HTMLAttributes<HTMLDivElement>;
   };
   virtual: {
-    virtualItems: any[];
+    virtualItems: VirtualItem[];
     totalSize: number;
     scrollToIndex: (index: number, options?: { align?: 'start' | 'center' | 'end' | 'auto' }) => void;
     scrollToCurrentMonth: () => void;

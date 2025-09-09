@@ -81,13 +81,17 @@ export function useCalendar(props: CalendarProps) {
         }
       }
       
-      const fullMonthName = date.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
+      const monthName = date.toLocaleDateString(locale, { month: 'long' });
+      const monthNameShort = date.toLocaleDateString(locale, { month: 'short' });
+      const monthYear = date.toLocaleDateString(locale, { year: 'numeric' });
       
       months.push({
         date,
         month: date.getMonth(),
         year: date.getFullYear(),
-        monthName: fullMonthName,
+        monthName,
+        monthNameShort,
+        monthYear,
         days: getDaysInMonth(date.getFullYear(), date.getMonth())
       });
     }

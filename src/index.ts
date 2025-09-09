@@ -13,5 +13,6 @@ export type {
   CalendarActions,
   CalendarHelpers,
   CalendarRenderProps,
-  CalendarMonth
+  CalendarMonth,
+  VirtualItem
 } from './types';

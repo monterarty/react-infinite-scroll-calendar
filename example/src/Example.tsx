@@ -109,16 +109,10 @@ const Example: React.FC = () => {
               </Calendar.Weekdays>
 
               <Calendar.Grid className="h-80">
-                {({ months, virtual }) => {
-                  console.log('Total months:', months.length);
-                  console.log('Virtual items:', virtual.virtualItems.length);
-                  console.log('Total size:', virtual.totalSize);
-                  
-                  return (
+                {({ months, virtual }) => (
                     <div style={{ height: virtual.totalSize, position: 'relative', width: '100%' }}>
                       {virtual.virtualItems.map((virtualItem: any) => {
                         const month = months[virtualItem.index];
-                        console.log('Rendering month:', virtualItem.index, month?.monthName);
                         return (
                         <div
                           key={virtualItem.key}
@@ -135,20 +129,20 @@ const Example: React.FC = () => {
                         >
                           <Calendar.Month month={month}>
                             {({ month: monthData }) => (
-                              <div className="p-2">
-                                <div className="text-center font-bold text-gray-800 mb-3 text-lg">
+                              <div className="p-2 h-full flex flex-col">
+                                <div className="text-center font-bold text-gray-800 mb-3 text-lg flex-shrink-0">
                                   {monthData.monthName}
                                 </div>
-                                <div className="grid grid-cols-7 gap-1">
+                                <div className="grid grid-cols-7 gap-1 flex-1">
                                   {monthData.days.map((day: Date | null, dayIdx: number) => (
                                     <Calendar.Day 
                                       key={dayIdx} 
                                       date={day}
                                       className={cn(
-                                        'h-12 w-full rounded-lg border-0 text-sm font-medium transition-all duration-200',
-                                        'hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400',
-                                        'data-[disabled]:opacity-30 data-[disabled]:cursor-not-allowed data-[disabled]:hover:scale-100',
-                                        'data-[selected]:bg-gradient-to-br data-[selected]:from-purple-500 data-[selected]:to-blue-500 data-[selected]:text-white',
+                                        'h-12 min-h-[48px] max-h-[48px] w-full rounded-lg border-0 text-sm font-medium transition-colors duration-200 flex items-center justify-center',
+                                        'hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-400',
+                                        'data-[disabled]:opacity-30 data-[disabled]:cursor-not-allowed data-[disabled]:hover:bg-transparent',
+                                        'data-[selected]:bg-gradient-to-br data-[selected]:from-purple-500 data-[selected]:to-blue-500 data-[selected]:text-white data-[selected]:hover:bg-gradient-to-br data-[selected]:hover:from-purple-600 data-[selected]:hover:to-blue-600',
                                         'data-[in-range]:bg-gradient-to-r data-[in-range]:from-purple-100 data-[in-range]:to-blue-100',
                                         'data-[range-end]:bg-gradient-to-br data-[range-end]:from-purple-600 data-[range-end]:to-blue-600 data-[range-end]:text-white data-[range-end]:font-bold',
                                         'data-[today]:ring-2 data-[today]:ring-yellow-400 data-[today]:bg-yellow-50'
@@ -165,8 +159,7 @@ const Example: React.FC = () => {
                       );
                     })}
                   </div>
-                  );
-                }}
+                )}
               </Calendar.Grid>
 
               <Calendar.SelectionInfo className="bg-gradient-to-r from-gray-50 to-blue-50 p-4 border-t">

@@ -1,6 +1,9 @@
 // Radix-style Primitive Components
 export { Calendar } from './primitives/Calendar';
 
+// Headless Hook
+export { useCalendar } from './headless/useCalendar';
+
 // Types
 export type { 
   CalendarProps, 
@@ -9,5 +12,6 @@ export type {
   CalendarState,
   CalendarActions,
   CalendarHelpers,
-  CalendarRenderProps
+  CalendarRenderProps,
+  CalendarMonth
 } from './types';

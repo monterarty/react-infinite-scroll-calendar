@@ -15,12 +15,17 @@ Modern React calendar component with Radix UI-style primitives. Full control ove
 ## Installation
 
 ```bash
-npm install react-infinite-scroll-calendar
+npm install react-infinite-scroll-calendar @tanstack/react-virtual
 # or
-yarn add react-infinite-scroll-calendar
+yarn add react-infinite-scroll-calendar @tanstack/react-virtual
 # or
-pnpm add react-infinite-scroll-calendar
+pnpm add react-infinite-scroll-calendar @tanstack/react-virtual
 ```
+
+**Required peer dependencies:**
+- `react >= 16.8.0`
+- `react-dom >= 16.8.0` 
+- `@tanstack/react-virtual ^3.0.0`
 
 ### Peer Dependencies
 

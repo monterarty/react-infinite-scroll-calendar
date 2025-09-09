@@ -4,32 +4,28 @@ Modern React calendar component with Radix UI-style primitives. Full control ove
 
 ## Features
 
-✨ **Radix UI-style Architecture** - Compound components for maximum flexibility  
+✨ **Radix UI-style Primitives** - Compound components for maximum flexibility  
 🎨 **Data Attributes** - Easy styling with `data-selected`, `data-disabled`, `data-today`  
 ⚡ **TypeScript First** - Complete type safety and IntelliSense support  
-🎯 **Headless Hook** - Use `useCalendar` for custom implementations  
+🖥️ **Virtual Scrolling** - Smooth infinite scroll with `@tanstack/react-virtual`  
 📱 **Responsive** - Works on desktop and mobile  
 🌍 **i18n Ready** - Configurable locales and date formats  
+🎯 **Production Ready** - Optimized build without console logs  
 
 ## Installation
 
-### From GitHub
-
 ```bash
-npm install monterarty/react-infinite-scroll-calendar
-```
-
-Or with yarn:
-```bash
-yarn add monterarty/react-infinite-scroll-calendar
+npm install react-infinite-scroll-calendar
+# or
+yarn add react-infinite-scroll-calendar
+# or
+pnpm add react-infinite-scroll-calendar
 ```
 
 ### Peer Dependencies
 
-Make sure you have React 16.8+ installed:
-
 ```bash
-npm install react react-dom
+npm install react react-dom @tanstack/react-virtual
 ```
 
 ## Quick Start
@@ -173,45 +169,6 @@ The component provides data attributes for easy CSS styling:
 }
 ```
 
-## Headless Usage
-
-For complete custom UI, use the `useCalendar` hook:
-
-```tsx
-import { useCalendar } from 'react-infinite-scroll-calendar';
-
-function CustomCalendar() {
-  const calendar = useCalendar({
-    value: dateRange,
-    onChange: setDateRange,
-    selectionMode: 'range',
-    locale: 'en-US'
-  });
-
-  return (
-    <div>
-      <h2>{calendar.state.visibleMonths[0]?.monthName}</h2>
-      
-      {calendar.state.visibleMonths.map(month => (
-        <div key={month.monthName}>
-          {month.days.map((date, idx) => (
-            <button
-              key={idx}
-              onClick={() => date && calendar.actions.selectDate(date)}
-              disabled={calendar.helpers.isDateDisabled(date)}
-              style={{
-                background: calendar.helpers.isDateInRange(date) ? '#blue' : 'white'
-              }}
-            >
-              {date?.getDate()}
-            </button>
-          ))}
-        </div>
-      ))}
-    </div>
-  );
-}
-```
 
 ## API Reference
 
@@ -256,17 +213,14 @@ interface DateRange {
 }
 ```
 
-### Hooks
-
-- `useCalendar(props: CalendarProps)` - Main calendar logic
-
 ## Examples
 
 Check out the `/example` directory for complete implementation examples including:
 
 - Primitive Components (Radix Style)
-- Headless Hook Usage
+- Virtual Scrolling Implementation  
 - Custom Styling Examples
+- Week Start Configuration
 
 ## Development
 
@@ -300,11 +254,19 @@ MIT © [monterarty](https://github.com/monterarty)
 
 ## Changelog
 
+### 1.1.0
+- **BREAKING**: Removed headless `useCalendar` hook - focus on Radix-style primitives only
+- ✅ Fixed virtual scrolling initialization flickering
+- ✅ Added smooth loading animation during initialization  
+- ✅ Removed all console.log statements for production
+- ✅ Improved TypeScript definitions
+- ✅ Cleaned repository structure
+- ✅ Production-ready build optimizations
+
 ### 1.0.0
 - Initial release
 - Radix UI-style compound components
 - Data attributes for styling
 - TypeScript support
-- Headless `useCalendar` hook
-- Infinite scroll functionality
+- Virtual infinite scroll functionality
 - i18n support

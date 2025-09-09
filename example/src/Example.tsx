@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { 
   Calendar,
-  useCalendar,
   DateRange
 } from 'react-infinite-scroll-calendar';
 
@@ -11,14 +10,17 @@ const cn = (...classes: Array<string | undefined | null | false>) => {
 
 const Example: React.FC = () => {
   const [selectedRange, setSelectedRange] = useState<DateRange>({ start: null, end: null });
-  const [currentExample, setCurrentExample] = useState<string>('primitives');
+  const [weekStartsOn, setWeekStartsOn] = useState<0 | 1>(1);
 
   const commonProps = {
     value: selectedRange,
     onChange: setSelectedRange,
-    minDate: new Date(),
-    disabledDays: [0, 6], // weekends
-    locale: 'ru-RU'
+    minDate: new Date('2024-09-01'), // минимум - 1 сентября 2024
+    maxDate: new Date('2025-12-31'), // максимум - 31 декабря 2025
+    disabledDays: [0, 6], // weekends disabled
+    disabledDates: [new Date('2024-12-25'), new Date('2024-12-31')], // отключить праздники
+    locale: 'ru-RU',
+    weekStartsOn
   };
 
   const examples = [
@@ -35,7 +37,7 @@ const Example: React.FC = () => {
                   <div className="text-center">
                     <h3 className="text-2xl font-bold mb-4">{currentMonth?.monthName}</h3>
                     
-                    <div className="flex justify-center gap-3">
+                    <div className="flex justify-center gap-3 mb-3">
                       <button 
                         onClick={() => actions.setSelectionMode('single')}
                         className={cn(
@@ -65,6 +67,31 @@ const Example: React.FC = () => {
                         Очистить
                       </button>
                     </div>
+                    
+                    <div className="flex justify-center gap-2">
+                      <button 
+                        onClick={() => setWeekStartsOn(1)}
+                        className={cn(
+                          'px-3 py-1 rounded-full text-xs font-medium transition-all',
+                          weekStartsOn === 1 
+                            ? 'bg-white text-green-600 shadow-lg' 
+                            : 'bg-green-500 hover:bg-green-400'
+                        )}
+                      >
+                        Пн-Вс
+                      </button>
+                      <button 
+                        onClick={() => setWeekStartsOn(0)}
+                        className={cn(
+                          'px-3 py-1 rounded-full text-xs font-medium transition-all',
+                          weekStartsOn === 0 
+                            ? 'bg-white text-orange-600 shadow-lg' 
+                            : 'bg-orange-500 hover:bg-orange-400'
+                        )}
+                      >
+                        Вс-Сб
+                      </button>
+                    </div>
                   </div>
                 )}
               </Calendar.Header>
@@ -81,41 +108,65 @@ const Example: React.FC = () => {
                 )}
               </Calendar.Weekdays>
 
-              <Calendar.Grid className="h-80 overflow-y-auto">
-                {({ months }) => (
-                  <div className="p-2">
-                    {months.slice(10, 15).map((month: any) => (
-                      <Calendar.Month key={`${month.year}-${month.month}`} month={month}>
-                        {({ month: monthData }) => (
-                          <div className="mb-6">
-                            <div className="text-center font-bold text-gray-800 mb-3 text-lg">
-                              {monthData.monthName}
-                            </div>
-                            <div className="grid grid-cols-7 gap-1">
-                              {monthData.days.map((day: Date | null, dayIdx: number) => (
-                                <Calendar.Day 
-                                  key={dayIdx} 
-                                  date={day}
-                                  className={cn(
-                                    'h-12 w-full rounded-lg border-0 text-sm font-medium transition-all duration-200',
-                                    'hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400',
-                                    'data-[disabled]:opacity-30 data-[disabled]:cursor-not-allowed data-[disabled]:hover:scale-100',
-                                    'data-[selected]:bg-gradient-to-br data-[selected]:from-purple-500 data-[selected]:to-blue-500 data-[selected]:text-white',
-                                    'data-[in-range]:bg-gradient-to-r data-[in-range]:from-purple-100 data-[in-range]:to-blue-100',
-                                    'data-[range-end]:bg-gradient-to-br data-[range-end]:from-purple-600 data-[range-end]:to-blue-600 data-[range-end]:text-white data-[range-end]:font-bold',
-                                    'data-[today]:ring-2 data-[today]:ring-yellow-400 data-[today]:bg-yellow-50'
-                                  )}
-                                >
-                                  {({ dayNumber }) => dayNumber}
-                                </Calendar.Day>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </Calendar.Month>
-                    ))}
+              <Calendar.Grid className="h-80">
+                {({ months, virtual }) => {
+                  console.log('Total months:', months.length);
+                  console.log('Virtual items:', virtual.virtualItems.length);
+                  console.log('Total size:', virtual.totalSize);
+                  
+                  return (
+                    <div style={{ height: virtual.totalSize, position: 'relative', width: '100%' }}>
+                      {virtual.virtualItems.map((virtualItem: any) => {
+                        const month = months[virtualItem.index];
+                        console.log('Rendering month:', virtualItem.index, month?.monthName);
+                        return (
+                        <div
+                          key={virtualItem.key}
+                          data-index={virtualItem.index}
+                          ref={(el) => el && virtual.virtualizer?.measureElement(el)}
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: `${virtualItem.size}px`,
+                            transform: `translateY(${virtualItem.start}px)`,
+                          }}
+                        >
+                          <Calendar.Month month={month}>
+                            {({ month: monthData }) => (
+                              <div className="p-2">
+                                <div className="text-center font-bold text-gray-800 mb-3 text-lg">
+                                  {monthData.monthName}
+                                </div>
+                                <div className="grid grid-cols-7 gap-1">
+                                  {monthData.days.map((day: Date | null, dayIdx: number) => (
+                                    <Calendar.Day 
+                                      key={dayIdx} 
+                                      date={day}
+                                      className={cn(
+                                        'h-12 w-full rounded-lg border-0 text-sm font-medium transition-all duration-200',
+                                        'hover:scale-105 focus:outline-none focus:ring-2 focus:ring-purple-400',
+                                        'data-[disabled]:opacity-30 data-[disabled]:cursor-not-allowed data-[disabled]:hover:scale-100',
+                                        'data-[selected]:bg-gradient-to-br data-[selected]:from-purple-500 data-[selected]:to-blue-500 data-[selected]:text-white',
+                                        'data-[in-range]:bg-gradient-to-r data-[in-range]:from-purple-100 data-[in-range]:to-blue-100',
+                                        'data-[range-end]:bg-gradient-to-br data-[range-end]:from-purple-600 data-[range-end]:to-blue-600 data-[range-end]:text-white data-[range-end]:font-bold',
+                                        'data-[today]:ring-2 data-[today]:ring-yellow-400 data-[today]:bg-yellow-50'
+                                      )}
+                                    >
+                                      {({ dayNumber }) => dayNumber}
+                                    </Calendar.Day>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </Calendar.Month>
+                        </div>
+                      );
+                    })}
                   </div>
-                )}
+                  );
+                }}
               </Calendar.Grid>
 
               <Calendar.SelectionInfo className="bg-gradient-to-r from-gray-50 to-blue-50 p-4 border-t">
@@ -143,16 +194,8 @@ const Example: React.FC = () => {
           )}
         </Calendar.Root>
       )
-    },
-    {
-      id: 'hook-only',
-      title: 'useCalendar Hook Only',
-      description: 'Полностью кастомный UI с использованием только хука',
-      component: <HookOnlyExample {...commonProps} />
     }
   ];
-
-  const currentExampleData = examples.find(ex => ex.id === currentExample) || examples[0];
 
   return (
     <div className="min-h-screen bg-gray-100 py-8">
@@ -164,38 +207,19 @@ const Example: React.FC = () => {
           Radix-подобные primitive компоненты для полной кастомизации
         </p>
 
-        {/* Example Selector */}
-        <div className="flex flex-wrap justify-center gap-3 mb-8">
-          {examples.map((example) => (
-            <button
-              key={example.id}
-              onClick={() => setCurrentExample(example.id)}
-              className={cn(
-                'px-6 py-3 rounded-xl text-sm font-medium transition-all duration-200',
-                'border-2 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400',
-                currentExample === example.id
-                  ? 'bg-blue-600 text-white border-blue-600 shadow-lg'
-                  : 'bg-white text-gray-700 border-gray-200 hover:border-blue-300 shadow-sm'
-              )}
-            >
-              {example.title}
-            </button>
-          ))}
-        </div>
-
         {/* Current Example */}
         <div className="bg-white rounded-2xl shadow-xl p-8 mb-8">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
-              {currentExampleData.title}
+              {examples[0].title}
             </h2>
             <p className="text-gray-600">
-              {currentExampleData.description}
+              {examples[0].description}
             </p>
           </div>
           
           <div className="flex justify-center">
-            {currentExampleData.component}
+            {examples[0].component}
           </div>
         </div>
 
@@ -264,84 +288,5 @@ const Example: React.FC = () => {
   );
 };
 
-// Hook-only example component
-const HookOnlyExample: React.FC<any> = (props: any) => {
-  const calendar = useCalendar(props);
-  
-  return (
-    <div className="max-w-md bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-1 shadow-xl">
-      <div className="bg-white rounded-xl overflow-hidden">
-        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4">
-          <h3 className="text-center font-bold text-lg">
-            Hook Only Calendar
-          </h3>
-          <div className="text-center text-sm opacity-90">
-            {calendar.state.visibleMonths[calendar.state.currentMonthIndex]?.monthName}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-7 bg-gray-50 text-center text-xs font-medium text-gray-600">
-          {calendar.weekdays.map((day: string, idx: number) => (
-            <div key={idx} className="py-2">{day}</div>
-          ))}
-        </div>
-
-        <div 
-          {...calendar.props.containerProps} 
-          className="h-64 overflow-y-auto p-3"
-        >
-          {calendar.state.visibleMonths.slice(10, 15).map((month: any) => (
-            <div key={`${month.year}-${month.month}`} className="mb-4">
-              <div className="text-center font-medium text-indigo-700 mb-2 text-sm">
-                {month.monthName}
-              </div>
-              <div className="grid grid-cols-7 gap-1">
-                {month.days.map((date: Date | null, idx: number) => {
-                  const isDisabled = calendar.helpers.isDateDisabled(date);
-                  const isSelected = calendar.helpers.isDateInRange(date);
-                  const isToday = calendar.helpers.isToday(date);
-                  
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => date && !isDisabled && calendar.actions.selectDate(date)}
-                      disabled={!date || isDisabled}
-                      className={cn(
-                        'h-8 w-8 text-xs rounded-full transition-all duration-200',
-                        !date && 'invisible',
-                        date && !isDisabled && 'hover:bg-indigo-100 cursor-pointer',
-                        isDisabled && 'text-gray-300 cursor-not-allowed',
-                        isSelected && 'bg-gradient-to-br from-indigo-500 to-purple-500 text-white font-bold',
-                        isToday && !isSelected && 'ring-2 ring-yellow-400 bg-yellow-50'
-                      )}
-                    >
-                      {date ? date.getDate() : ''}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="p-3 bg-indigo-50 text-center text-sm text-indigo-700 min-h-[2.5rem] flex items-center justify-center">
-          {calendar.state.selectedRange.start ? (
-            <div className="w-full">
-              <div className="font-medium">Выбрано:</div>
-              <div className="text-xs mt-1">
-                {calendar.helpers.formatDate(calendar.state.selectedRange.start)}
-                {calendar.state.selectedRange.end && (
-                  <> — {calendar.helpers.formatDate(calendar.state.selectedRange.end)}</>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div>Выберите даты</div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 export default Example;

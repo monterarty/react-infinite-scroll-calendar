@@ -22,6 +22,7 @@ export interface CalendarState {
   visibleMonths: CalendarMonth[];
   currentMonthIndex: number;
   isScrolling: boolean;
+  isInitialized: boolean;
 }
 
 export interface CalendarActions {
@@ -56,6 +57,8 @@ export interface CalendarProps {
   monthNames?: string[];
   dayNames?: string[];
   monthBuffer?: { before: number; after: number };
+  minMonth?: Date;
+  maxMonth?: Date;
   children?: React.ReactNode | ((props: CalendarRenderProps & { weekdays: string[] }) => React.ReactNode);
 }
 
@@ -65,5 +68,12 @@ export interface CalendarRenderProps {
   helpers: CalendarHelpers;
   props: {
     containerProps: React.HTMLAttributes<HTMLDivElement>;
+  };
+  virtual: {
+    virtualItems: any[];
+    totalSize: number;
+    scrollToIndex: (index: number, options?: { align?: 'start' | 'center' | 'end' | 'auto' }) => void;
+    scrollToCurrentMonth: () => void;
+    virtualizer: any;
   };
 }

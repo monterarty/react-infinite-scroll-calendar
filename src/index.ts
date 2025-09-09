@@ -1,9 +1,13 @@
+// Radix-style Primitive Components
 export { Calendar } from './primitives/Calendar';
 
-export * from './headless';
-
+// Types
 export type { 
   CalendarProps, 
   DateRange, 
-  SelectionMode
+  SelectionMode,
+  CalendarState,
+  CalendarActions,
+  CalendarHelpers,
+  CalendarRenderProps
 } from './types';

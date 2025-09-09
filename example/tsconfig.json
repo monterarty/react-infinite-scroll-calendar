@@ -18,7 +18,12 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "paths": {
+      "react-infinite-scroll-calendar": ["../src/index.ts"],
+      "react-infinite-scroll-calendar/*": ["../src/*"]
+    },
+    "baseUrl": "."
   },
   "include": [
     "src"

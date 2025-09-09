@@ -8,6 +8,7 @@ import {
   DateRange,
   SelectionMode 
 } from '../types';
+import { useVirtualCalendar } from './useVirtualCalendar';
 
 export function useCalendar(props: CalendarProps) {
   const {
@@ -21,9 +22,10 @@ export function useCalendar(props: CalendarProps) {
     disabledDays = [],
     locale = 'ru-RU',
     weekStartsOn = 0,
-    monthNames,
     dayNames,
-    monthBuffer = { before: 12, after: 24 }
+    monthBuffer = { before: 12, after: 24 },
+    minMonth,
+    maxMonth
   } = props;
 
   // Internal state
@@ -32,11 +34,10 @@ export function useCalendar(props: CalendarProps) {
   const [internalSelectionMode, setInternalSelectionMode] = useState<SelectionMode>(selectionMode);
   const [visibleMonths, setVisibleMonths] = useState<CalendarMonth[]>([]);
   const [currentMonthIndex, setCurrentMonthIndex] = useState(monthBuffer.before);
-  const [isScrolling, setIsScrolling] = useState(false);
+  const [isScrolling] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   
   const containerRef = useRef<HTMLDivElement>(null);
-  const isScrollingRef = useRef(false);
-  const scrollTimeoutRef = useRef<number | null>(null);
 
   // Use controlled or uncontrolled value
   const selectedRange = value !== undefined ? value : internalSelectedRange;
@@ -60,8 +61,26 @@ export function useCalendar(props: CalendarProps) {
     const months: CalendarMonth[] = [];
     const today = new Date();
 
+    // Определяем реальные границы
+    const actualMinDate = minMonth || minDate;
+    const actualMaxDate = maxMonth || maxDate;
+
     for (let i = -monthBuffer.before; i <= monthBuffer.after; i++) {
       const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
+      
+      // Проверяем, находится ли месяц в допустимом диапазоне
+      if (actualMinDate || actualMaxDate) {
+        const monthEnd = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+        const monthStart = new Date(date.getFullYear(), date.getMonth(), 1);
+        
+        if (actualMinDate && monthEnd < actualMinDate) {
+          continue;
+        }
+        if (actualMaxDate && monthStart > actualMaxDate) {
+          continue;
+        }
+      }
+      
       const fullMonthName = date.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
       
       months.push({
@@ -72,8 +91,9 @@ export function useCalendar(props: CalendarProps) {
         days: getDaysInMonth(date.getFullYear(), date.getMonth())
       });
     }
+    
     return months;
-  }, [locale, monthNames, monthBuffer, weekStartsOn]);
+  }, [locale, monthBuffer.before, monthBuffer.after, weekStartsOn, minDate, maxDate, minMonth, maxMonth]);
 
   // Generate days in month
   const getDaysInMonth = (year: number, month: number): Array<Date | null> => {
@@ -104,9 +124,44 @@ export function useCalendar(props: CalendarProps) {
 
   // Initialize months
   useEffect(() => {
-    setVisibleMonths(generateMonths());
-    setCurrentMonthIndex(monthBuffer.before);
-  }, [generateMonths, monthBuffer.before]);
+    const months = generateMonths();
+    setVisibleMonths(months);
+    // Найти индекс текущего месяца в сгенерированном списке
+    const today = new Date();
+    const currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const foundIndex = months.findIndex(month => 
+      month.date.getFullYear() === currentMonth.getFullYear() && 
+      month.date.getMonth() === currentMonth.getMonth()
+    );
+    
+    // Если текущий месяц найден, используем его индекс, иначе используем первый месяц
+    const indexToUse = foundIndex >= 0 ? foundIndex : 0;
+    setCurrentMonthIndex(indexToUse);
+  }, [generateMonths]);
+
+  // Virtual calendar integration
+  const virtual = useVirtualCalendar({
+    months: visibleMonths,
+    containerRef,
+    currentMonthIndex,
+    estimateSize: 320,
+    overscan: 3
+  });
+
+  // Scroll to current month after months are loaded
+  const hasScrolledToInitial = useRef(false);
+  useEffect(() => {
+    if (visibleMonths.length > 0 && currentMonthIndex >= 0 && !hasScrolledToInitial.current) {
+      hasScrolledToInitial.current = true;
+      const targetOffset = currentMonthIndex * 320;
+      virtual.virtualizer.scrollToOffset(targetOffset);
+      
+      // Показать календарь после небольшой задержки для завершения позиционирования
+      setTimeout(() => {
+        setIsInitialized(true);
+      }, 50);
+    }
+  }, [visibleMonths.length, currentMonthIndex, virtual.virtualizer]);
 
   // Helpers
   const helpers: CalendarHelpers = {
@@ -215,53 +270,20 @@ export function useCalendar(props: CalendarProps) {
     },
 
     scrollToMonth: (index: number) => {
-      if (!containerRef.current) return;
-      
-      setIsScrolling(true);
-      isScrollingRef.current = true;
-      
-      const monthHeight = 350; // This should be configurable
-      
-      containerRef.current.scrollTo({
-        behavior: 'smooth',
-        top: index * monthHeight
-      });
-
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-      }
-      
-      scrollTimeoutRef.current = setTimeout(() => {
-        setIsScrolling(false);
-        isScrollingRef.current = false;
-      }, 500);
+      virtual.scrollToIndex(index, { align: 'center' });
+      setCurrentMonthIndex(index);
     },
 
     scrollToToday: () => {
-      actions.scrollToMonth(monthBuffer.before);
+      virtual.scrollToIndex(monthBuffer.before, { align: 'center' });
+      setCurrentMonthIndex(monthBuffer.before);
     }
   };
 
-  // Handle scroll
+  // Handle scroll - now managed by virtual calendar
   const handleScroll = useCallback(() => {
-    if (isScrollingRef.current) return;
-
-    const container = containerRef.current;
-    if (!container) return;
-
-    const scrollTop = container.scrollTop;
-    const monthHeight = 350; // This should be configurable
-
-    const newMonthIndex = Math.round(scrollTop / monthHeight);
-
-    if (
-      newMonthIndex !== currentMonthIndex &&
-      newMonthIndex >= 0 &&
-      newMonthIndex < visibleMonths.length
-    ) {
-      setCurrentMonthIndex(newMonthIndex);
-    }
-  }, [currentMonthIndex, visibleMonths.length]);
+    // Virtual calendar handles scroll positioning automatically
+  }, []);
 
   // State object
   const state: CalendarState = {
@@ -270,7 +292,8 @@ export function useCalendar(props: CalendarProps) {
     selectionMode: internalSelectionMode,
     visibleMonths,
     currentMonthIndex,
-    isScrolling
+    isScrolling,
+    isInitialized
   };
 
   // Props for HTML elements
@@ -280,7 +303,7 @@ export function useCalendar(props: CalendarProps) {
   };
 
   const scrollAreaProps = {
-    style: { height: '320px', overflowY: 'auto' as const }
+    style: { overflowY: 'auto' as const }
   };
 
   return {
@@ -291,6 +314,13 @@ export function useCalendar(props: CalendarProps) {
       containerProps,
       scrollAreaProps
     },
-    weekdays: getDefaultDayNames()
+    weekdays: getDefaultDayNames(),
+    virtual: {
+      virtualItems: virtual.virtualItems,
+      totalSize: virtual.totalSize,
+      scrollToIndex: virtual.scrollToIndex,
+      scrollToCurrentMonth: virtual.scrollToCurrentMonth,
+      virtualizer: virtual.virtualizer
+    }
   };
 }

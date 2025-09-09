@@ -1,5 +1,5 @@
 import React, { createContext, useContext, forwardRef } from 'react';
-import { useCalendar } from '../headless/useCalendar';
+import { useCalendar } from '../headless';
 import { CalendarProps, CalendarRenderProps } from '../types';
 
 const cn = (...classes: Array<string | undefined | null | false>) => {
@@ -10,6 +10,13 @@ type RenderFunction<T = any> = (props: T) => React.ReactNode;
 
 interface CalendarContextValue extends CalendarRenderProps {
   weekdays: string[];
+  virtual: {
+    virtualItems: any[];
+    totalSize: number;
+    scrollToIndex: (index: number, options?: { align?: 'start' | 'center' | 'end' | 'auto' }) => void;
+    scrollToCurrentMonth: () => void;
+    virtualizer: any;
+  };
 }
 
 const CalendarContext = createContext<CalendarContextValue | null>(null);
@@ -36,7 +43,8 @@ const CalendarRoot = forwardRef<HTMLDivElement, CalendarRootProps>(
       actions: calendar.actions,
       helpers: calendar.helpers,
       props: calendar.props,
-      weekdays: calendar.weekdays
+      weekdays: calendar.weekdays,
+      virtual: calendar.virtual
     };
 
     const content = typeof children === 'function' ? children(contextValue) : children;
@@ -164,6 +172,11 @@ interface CalendarGridProps {
     helpers: any;
     actions: any;
     state: any;
+    virtual: {
+      virtualItems: any[];
+      totalSize: number;
+      virtualizer?: any;
+    };
   }>;
   className?: string;
 }
@@ -176,19 +189,36 @@ const CalendarGrid = forwardRef<HTMLDivElement, CalendarGridProps>(
       months: context.state.visibleMonths,
       helpers: context.helpers,
       actions: context.actions,
-      state: context.state
+      state: context.state,
+      virtual: {
+        virtualItems: context.virtual.virtualItems,
+        totalSize: context.virtual.totalSize,
+        virtualizer: context.virtual.virtualizer
+      }
     };
 
     const content = typeof children === 'function' ? children(gridProps) : children;
-
     return (
       <div
         ref={ref}
         className={cn('calendar-grid', className)}
         data-calendar-grid=""
         {...context.props.containerProps}
+        style={{ height: '400px', overflow: 'auto', position: 'relative' }}
       >
-        {content}
+        <div 
+          style={{ 
+            opacity: context.state.isInitialized ? 1 : 0,
+            transition: 'opacity 200ms ease-in-out'
+          }}
+        >
+          {content}
+        </div>
+        {!context.state.isInitialized && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        )}
       </div>
     );
   }
@@ -272,19 +302,19 @@ const CalendarDay = forwardRef<HTMLButtonElement, CalendarDayProps>(
       actions
     };
 
-    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const handleClick = () => {
       if (date && !isDisabled) {
         actions.selectDate(date);
       }
     };
 
-    const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const handleMouseEnter = () => {
       if (date && !isDisabled && state.selectionMode === 'range' && state.selectedRange.start && !state.selectedRange.end) {
         actions.setHoveredDate(date);
       }
     };
 
-    const handleMouseLeave = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const handleMouseLeave = () => {
       if (state.selectionMode === 'range') {
         actions.setHoveredDate(null);
       }

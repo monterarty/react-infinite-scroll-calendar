@@ -48,14 +48,8 @@ export interface CalendarMonth {
   days: Array<Date | null>;
 }
 
-export interface VirtualItem {
-  index: number;
-  start: number;
-  size: number;
-  end: number;
-  key: string | number;
-  lane: number;
-}
+// Re-export VirtualItem from @tanstack/react-virtual to avoid conflicts
+export type VirtualItem = import('@tanstack/virtual-core').VirtualItem;
 
 export interface CalendarState {
   selectedRange: DateRange;
@@ -117,6 +111,6 @@ export interface CalendarRenderProps {
     totalSize: number;
     scrollToIndex: (index: number, options?: { align?: 'start' | 'center' | 'end' | 'auto' }) => void;
     scrollToCurrentMonth: () => void;
-    virtualizer: any;
+    virtualizer: import('@tanstack/react-virtual').Virtualizer<HTMLDivElement, Element>;
   };
 }

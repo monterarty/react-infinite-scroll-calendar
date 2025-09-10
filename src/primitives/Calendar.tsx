@@ -1,21 +1,22 @@
 import React, { createContext, useContext, forwardRef } from 'react';
+import { Virtualizer } from '@tanstack/react-virtual';
 import { useCalendar } from '../headless';
-import { CalendarProps, CalendarRenderProps } from '../types';
+import { CalendarProps, CalendarRenderProps, CalendarMonth, VirtualItem, CalendarState, CalendarActions, CalendarHelpers, DateRange } from '../types';
 
 const cn = (...classes: Array<string | undefined | null | false>) => {
   return classes.filter(Boolean).join(' ');
 };
 
-type RenderFunction<T = any> = (props: T) => React.ReactNode;
+type RenderFunction<T = Record<string, unknown>> = (props: T) => React.ReactNode;
 
 interface CalendarContextValue extends CalendarRenderProps {
   weekdays: string[];
   virtual: {
-    virtualItems: any[];
+    virtualItems: VirtualItem[];
     totalSize: number;
     scrollToIndex: (index: number, options?: { align?: 'start' | 'center' | 'end' | 'auto' }) => void;
     scrollToCurrentMonth: () => void;
-    virtualizer: any;
+    virtualizer: Virtualizer<HTMLDivElement, Element>;
   };
 }
 
@@ -66,8 +67,8 @@ CalendarRoot.displayName = 'CalendarRoot';
 
 interface CalendarHeaderProps {
   children?: React.ReactNode | RenderFunction<{
-    currentMonth: any;
-    actions: any;
+    currentMonth: CalendarMonth | null;
+    actions: CalendarActions;
     canNavigatePrev: boolean;
     canNavigateNext: boolean;
   }>;
@@ -106,7 +107,7 @@ CalendarHeader.displayName = 'CalendarHeader';
 
 interface CalendarNavigationProps {
   children?: React.ReactNode | RenderFunction<{
-    actions: any;
+    actions: CalendarActions;
     canNavigatePrev: boolean;
     canNavigateNext: boolean;
   }>;
@@ -168,14 +169,14 @@ CalendarWeekdays.displayName = 'CalendarWeekdays';
 
 interface CalendarGridProps {
   children?: React.ReactNode | RenderFunction<{
-    months: any[];
-    helpers: any;
-    actions: any;
-    state: any;
+    months: CalendarMonth[];
+    helpers: CalendarHelpers;
+    actions: CalendarActions;
+    state: CalendarState;
     virtual: {
-      virtualItems: any[];
+      virtualItems: VirtualItem[];
       totalSize: number;
-      virtualizer?: any;
+      virtualizer?: Virtualizer<HTMLDivElement, Element>;
     };
   }>;
   className?: string;
@@ -226,12 +227,12 @@ const CalendarGrid = forwardRef<HTMLDivElement, CalendarGridProps>(
 CalendarGrid.displayName = 'CalendarGrid';
 
 interface CalendarMonthProps {
-  month: any;
+  month: CalendarMonth;
   children?: React.ReactNode | RenderFunction<{
-    month: any;
-    helpers: any;
-    actions: any;
-    state: any;
+    month: CalendarMonth;
+    helpers: CalendarHelpers;
+    actions: CalendarActions;
+    state: CalendarState;
   }>;
   className?: string;
 }
@@ -273,7 +274,7 @@ interface CalendarDayProps {
     isToday: boolean;
     isHovered: boolean;
     dayNumber: number | null;
-    actions: any;
+    actions: CalendarActions;
   }>;
   className?: string;
   disabled?: boolean;
@@ -346,7 +347,7 @@ CalendarDay.displayName = 'CalendarDay';
 
 interface CalendarSelectionInfoProps {
   children?: React.ReactNode | RenderFunction<{
-    selectedRange: any;
+    selectedRange: DateRange;
     selectionMode: string;
     daysInRange: number;
     formatDate: (date: Date) => string;

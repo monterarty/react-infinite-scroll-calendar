@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Calendar,
-  DateRange,
-  CalendarMonth,
-  VirtualItem
+  DateRange
 } from 'react-infinite-scroll-calendar';
 
 const cn = (...classes: Array<string | undefined | null | false>) => {
@@ -100,7 +98,7 @@ const Example: React.FC = () => {
               <Calendar.Weekdays className="grid grid-cols-7 bg-gray-50 border-b">
                 {({ weekdays }) => (
                   <>
-                    {weekdays.map((day: string, idx: number) => (
+                    {weekdays.map((day, idx) => (
                       <div key={idx} className="text-center py-3 text-sm font-semibold text-gray-600">
                         {day}
                       </div>
@@ -112,8 +110,8 @@ const Example: React.FC = () => {
               <Calendar.Grid className="h-80">
                 {({ months, virtual }) => (
                     <div style={{ height: virtual.totalSize, position: 'relative', width: '100%' }}>
-                      {virtual.virtualItems.map((virtualItem: VirtualItem) => {
-                        const month: CalendarMonth = months[virtualItem.index];
+                      {virtual.virtualItems.map((virtualItem) => {
+                        const month = months[virtualItem.index];
                         return (
                         <div
                           key={virtualItem.key}
@@ -140,7 +138,7 @@ const Example: React.FC = () => {
                                   </div>
                                 </div>
                                 <div className="grid grid-cols-7 gap-1 pb-2">
-                                  {monthData.days.map((day: Date | null, dayIdx: number) => (
+                                  {monthData.days.map((day, dayIdx) => (
                                     <Calendar.Day 
                                       key={dayIdx} 
                                       date={day}
@@ -258,28 +256,6 @@ const Example: React.FC = () => {
                 Полная типизация всех API, автокомплит и проверка типов из коробки
               </p>
             </div>
-          </div>
-        </div>
-
-        {/* Selection Status */}
-        <div className="bg-blue-50 rounded-xl p-6 text-center">
-          <h3 className="font-bold text-blue-800 mb-2">Текущий выбор</h3>
-          <div className="text-blue-700">
-            {selectedRange.start ? (
-              <div>
-                <strong>От:</strong> {selectedRange.start.toLocaleDateString('ru-RU')}
-                {selectedRange.end && (
-                  <>
-                    {' '}<strong>До:</strong> {selectedRange.end.toLocaleDateString('ru-RU')}
-                    <div className="text-sm mt-1">
-                      Дней: {Math.ceil((selectedRange.end.getTime() - selectedRange.start.getTime()) / (1000 * 60 * 60 * 24)) + 1}
-                    </div>
-                  </>
-                )}
-              </div>
-            ) : (
-              'Даты не выбраны'
-            )}
           </div>
         </div>
       </div>

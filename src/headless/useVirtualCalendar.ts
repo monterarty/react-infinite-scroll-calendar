@@ -15,17 +15,14 @@ export function useVirtualCalendar({
   estimateSize?: number;
   overscan?: number;
 }) {
-  const initialOffset = currentMonthIndex * estimateSize;
-  
-  const virtualizer = useVirtualizer({
+  const virtualizerConfig = {
     count: months.length,
-    getScrollElement: () => {
-      return containerRef.current;
-    },
+    getScrollElement: () => containerRef.current,
     estimateSize: () => estimateSize,
-    overscan,
-    initialOffset
-  });
+    overscan
+  };
+  
+  const virtualizer = useVirtualizer(virtualizerConfig);
 
   const virtualItems = virtualizer.getVirtualItems();
   const scrollToIndex = useMemo(() => (

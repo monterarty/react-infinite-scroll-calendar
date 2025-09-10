@@ -6,7 +6,9 @@ import {
   CalendarHelpers,
   CalendarMonth,
   DateRange,
-  SelectionMode 
+  SelectionMode,
+  validateDateRange,
+  validateDateBounds
 } from '../types';
 import { useVirtualCalendar } from './useVirtualCalendar';
 
@@ -16,20 +18,28 @@ export function useCalendar(props: CalendarProps) {
     defaultValue = { start: null, end: null },
     value,
     onChange,
-    minDate,
-    maxDate,
+    minDate: rawMinDate,
+    maxDate: rawMaxDate,
     disabledDates = [],
     disabledDays = [],
     locale = 'ru-RU',
     weekStartsOn = 0,
     dayNames,
     monthBuffer = { before: 12, after: 24 },
-    minMonth,
-    maxMonth
+    minMonth: rawMinMonth,
+    maxMonth: rawMaxMonth,
+    estimateSize = 320
   } = props;
 
+  // Validate and fix date bounds
+  const { minDate, maxDate } = validateDateBounds(rawMinDate, rawMaxDate);
+  const { minDate: minMonth, maxDate: maxMonth } = validateDateBounds(rawMinMonth, rawMaxMonth);
+  
+  // Validate defaultValue range
+  const validatedDefaultValue = validateDateRange(defaultValue);
+
   // Internal state
-  const [internalSelectedRange, setInternalSelectedRange] = useState<DateRange>(defaultValue);
+  const [internalSelectedRange, setInternalSelectedRange] = useState<DateRange>(validatedDefaultValue);
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
   const [internalSelectionMode, setInternalSelectionMode] = useState<SelectionMode>(selectionMode);
   const [visibleMonths, setVisibleMonths] = useState<CalendarMonth[]>([]);
@@ -159,7 +169,7 @@ export function useCalendar(props: CalendarProps) {
     months: visibleMonths,
     containerRef,
     currentMonthIndex,
-    estimateSize: 320,
+    estimateSize,
     overscan: 3
   });
 
@@ -168,13 +178,14 @@ export function useCalendar(props: CalendarProps) {
   useEffect(() => {
     if (visibleMonths.length > 0 && currentMonthIndex >= 0 && !hasScrolledToInitial.current) {
       hasScrolledToInitial.current = true;
-      const targetOffset = currentMonthIndex * 320;
-      virtual.virtualizer.scrollToOffset(targetOffset);
       
-      // Показать календарь после небольшой задержки для завершения позиционирования
+      // Используем scrollToIndex для точного позиционирования
+      virtual.virtualizer.scrollToIndex(currentMonthIndex, { align: 'start' });
+      
+      // Показать календарь после задержки для завершения измерений
       setTimeout(() => {
         setIsInitialized(true);
-      }, 50);
+      }, 100);
     }
   }, [visibleMonths.length, currentMonthIndex, virtual.virtualizer]);
 
@@ -242,10 +253,12 @@ export function useCalendar(props: CalendarProps) {
 
   // Handle selection change
   const handleSelectionChange = (newValue: DateRange) => {
+    const validatedValue = validateDateRange(newValue);
+
     if (value === undefined) {
-      setInternalSelectedRange(newValue);
+      setInternalSelectedRange(validatedValue);
     }
-    onChange?.(newValue);
+    onChange?.(validatedValue);
   };
 
   // Actions

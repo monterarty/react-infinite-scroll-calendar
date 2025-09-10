@@ -17,12 +17,13 @@ const Example: React.FC = () => {
   const commonProps = {
     value: selectedRange,
     onChange: setSelectedRange,
-    minDate: new Date('2024-09-01'), // минимум - 1 сентября 2024
-    maxDate: new Date('2025-12-31'), // максимум - 31 декабря 2025
+    minDate: new Date('2024-09-01'), // minimum - 1 september 2024
+    maxDate: new Date('2025-12-31'), // maximum - 31 december 2025
     disabledDays: [0, 6], // weekends disabled
-    disabledDates: [new Date('2024-12-25'), new Date('2024-12-31')], // отключить праздники
+    disabledDates: [new Date('2024-12-25'), new Date('2024-12-31')], // holidays disabled
     locale: 'ru-RU',
-    weekStartsOn
+    weekStartsOn,
+    estimateSize: 320
   };
 
   const examples = [
@@ -35,10 +36,8 @@ const Example: React.FC = () => {
           {({ state, actions }) => (
             <div>
               <Calendar.Header className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6">
-                {({ currentMonth }) => (
+                {() => (
                   <div className="text-center">
-                    <h3 className="text-2xl font-bold mb-4">{currentMonth?.monthName}</h3>
-                    
                     <div className="flex justify-center gap-3 mb-3">
                       <button 
                         onClick={() => actions.setSelectionMode('single')}
@@ -125,14 +124,14 @@ const Example: React.FC = () => {
                             top: 0,
                             left: 0,
                             width: '100%',
-                            height: `${virtualItem.size}px`,
+                            minHeight: `${virtualItem.size}px`,
                             transform: `translateY(${virtualItem.start}px)`,
                           }}
                         >
                           <Calendar.Month month={month}>
                             {({ month: monthData }) => (
-                              <div className="p-2 h-full flex flex-col">
-                                <div className="text-center mb-3 flex-shrink-0">
+                              <div className="p-2 min-h-fit">
+                                <div className="text-center mb-3">
                                   <div className="font-bold text-gray-800 text-xl">
                                     {monthData.monthName}
                                   </div>
@@ -140,7 +139,7 @@ const Example: React.FC = () => {
                                     {monthData.monthYear}
                                   </div>
                                 </div>
-                                <div className="grid grid-cols-7 gap-1 flex-1">
+                                <div className="grid grid-cols-7 gap-1 pb-2">
                                   {monthData.days.map((day: Date | null, dayIdx: number) => (
                                     <Calendar.Day 
                                       key={dayIdx} 

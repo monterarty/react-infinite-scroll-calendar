@@ -7,6 +7,37 @@ export interface DateRange {
 
 export type SelectionMode = 'single' | 'range';
 
+// Validation utility functions
+export const validateDateRange = (range: DateRange): DateRange => {
+  if (range.start && range.end && range.start > range.end) {
+    console.warn('[Calendar] Date range start is greater than end. Swapping values automatically.');
+    return { start: range.end, end: range.start };
+  }
+  return range;
+};
+
+export const validateDateBounds = (minDate?: Date, maxDate?: Date): { minDate?: Date; maxDate?: Date } => {
+  if (minDate && maxDate && minDate > maxDate) {
+    console.warn('[Calendar] minDate is greater than maxDate. Swapping values automatically.');
+    return { minDate: maxDate, maxDate: minDate };
+  }
+  return { minDate, maxDate };
+};
+
+/**
+ * Example usage:
+ * 
+ * // These props will be automatically corrected:
+ * <Calendar.Root
+ *   minDate={new Date('2025-01-01')}
+ *   maxDate={new Date('2024-12-31')} // ❌ Wrong order - will be swapped automatically
+ *   defaultValue={{
+ *     start: new Date('2024-12-31'),
+ *     end: new Date('2024-12-01')   // ❌ Wrong order - will be swapped automatically
+ *   }}
+ * />
+ */
+
 export interface CalendarMonth {
   date: Date;
   month: number;
@@ -70,6 +101,7 @@ export interface CalendarProps {
   monthBuffer?: { before: number; after: number };
   minMonth?: Date;
   maxMonth?: Date;
+  estimateSize?: number;
   children?: React.ReactNode | ((props: CalendarRenderProps & { weekdays: string[] }) => React.ReactNode);
 }
 

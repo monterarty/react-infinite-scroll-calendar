@@ -1,7 +1,7 @@
 import React, { createContext, useContext, forwardRef } from 'react';
 import { Virtualizer } from '@tanstack/react-virtual';
 import { useCalendar } from '../headless';
-import { CalendarProps, CalendarRenderProps, CalendarMonth, VirtualItem, CalendarState, CalendarActions, CalendarHelpers, DateRange } from '../types';
+import { ICalendarProps, ICalendarRenderProps, ICalendarMonth, TVirtualItem, ICalendarState, ICalendarActions, ICalendarHelpers, IDateRange } from '../types';
 
 const cn = (...classes: Array<string | undefined | null | false>) => {
   return classes.filter(Boolean).join(' ');
@@ -9,10 +9,10 @@ const cn = (...classes: Array<string | undefined | null | false>) => {
 
 type RenderFunction<T = Record<string, unknown>> = (props: T) => React.ReactNode;
 
-interface CalendarContextValue extends CalendarRenderProps {
+interface CalendarContextValue extends ICalendarRenderProps {
   weekdays: string[];
   virtual: {
-    virtualItems: VirtualItem[];
+    virtualItems: TVirtualItem[];
     totalSize: number;
     scrollToIndex: (index: number, options?: { align?: 'start' | 'center' | 'end' | 'auto' }) => void;
     scrollToCurrentMonth: () => void;
@@ -30,7 +30,7 @@ const useCalendarContext = (): CalendarContextValue => {
   return context;
 };
 
-interface CalendarRootProps extends CalendarProps {
+interface CalendarRootProps extends ICalendarProps {
   children?: React.ReactNode | RenderFunction<CalendarContextValue>;
   className?: string;
 }
@@ -67,8 +67,8 @@ CalendarRoot.displayName = 'CalendarRoot';
 
 interface CalendarHeaderProps {
   children?: React.ReactNode | RenderFunction<{
-    currentMonth: CalendarMonth | null;
-    actions: CalendarActions;
+    currentMonth: ICalendarMonth | null;
+    actions: ICalendarActions;
     canNavigatePrev: boolean;
     canNavigateNext: boolean;
   }>;
@@ -107,7 +107,7 @@ CalendarHeader.displayName = 'CalendarHeader';
 
 interface CalendarNavigationProps {
   children?: React.ReactNode | RenderFunction<{
-    actions: CalendarActions;
+    actions: ICalendarActions;
     canNavigatePrev: boolean;
     canNavigateNext: boolean;
   }>;
@@ -169,12 +169,12 @@ CalendarWeekdays.displayName = 'CalendarWeekdays';
 
 interface CalendarGridProps {
   children?: React.ReactNode | RenderFunction<{
-    months: CalendarMonth[];
-    helpers: CalendarHelpers;
-    actions: CalendarActions;
-    state: CalendarState;
+    months: ICalendarMonth[];
+    helpers: ICalendarHelpers;
+    actions: ICalendarActions;
+    state: ICalendarState;
     virtual: {
-      virtualItems: VirtualItem[];
+      virtualItems: TVirtualItem[];
       totalSize: number;
       virtualizer?: Virtualizer<HTMLDivElement, Element>;
     };
@@ -227,12 +227,12 @@ const CalendarGrid = forwardRef<HTMLDivElement, CalendarGridProps>(
 CalendarGrid.displayName = 'CalendarGrid';
 
 interface CalendarMonthProps {
-  month: CalendarMonth;
+  month: ICalendarMonth;
   children?: React.ReactNode | RenderFunction<{
-    month: CalendarMonth;
-    helpers: CalendarHelpers;
-    actions: CalendarActions;
-    state: CalendarState;
+    month: ICalendarMonth;
+    helpers: ICalendarHelpers;
+    actions: ICalendarActions;
+    state: ICalendarState;
   }>;
   className?: string;
 }
@@ -271,10 +271,11 @@ interface CalendarDayProps {
     isSelected: boolean;
     isInRange: boolean;
     isRangeEnd: boolean;
+    isRangeStart: boolean;
     isToday: boolean;
     isHovered: boolean;
     dayNumber: number | null;
-    actions: CalendarActions;
+    actions: ICalendarActions;
   }>;
   className?: string;
   disabled?: boolean;
@@ -288,6 +289,7 @@ const CalendarDay = forwardRef<HTMLButtonElement, CalendarDayProps>(
     const isSelected = helpers.isDateInRange(date);
     const isInRange = helpers.isDateInRange(date);
     const isRangeEnd = helpers.isDateRangeEnd(date);
+    const isRangeStart = helpers.isDateRangeStart(date);
     const isToday = helpers.isToday(date);
     const isHovered = Boolean(date && state.hoveredDate?.toDateString() === date.toDateString());
     
@@ -297,6 +299,7 @@ const CalendarDay = forwardRef<HTMLButtonElement, CalendarDayProps>(
       isSelected,
       isInRange,
       isRangeEnd,
+      isRangeStart,
       isToday,
       isHovered,
       dayNumber: date ? date.getDate() : null,
@@ -336,6 +339,7 @@ const CalendarDay = forwardRef<HTMLButtonElement, CalendarDayProps>(
         data-disabled={isDisabled || undefined}
         data-today={isToday || undefined}
         data-in-range={isInRange || undefined}
+        data-range-start={isRangeStart || undefined}
         data-range-end={isRangeEnd || undefined}
       >
         {content}
@@ -347,7 +351,7 @@ CalendarDay.displayName = 'CalendarDay';
 
 interface CalendarSelectionInfoProps {
   children?: React.ReactNode | RenderFunction<{
-    selectedRange: DateRange;
+    selectedRange: IDateRange;
     selectionMode: string;
     daysInRange: number;
     formatDate: (date: Date) => string;

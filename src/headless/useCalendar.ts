@@ -1,18 +1,18 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { 
-  CalendarProps, 
-  CalendarState, 
-  CalendarActions, 
-  CalendarHelpers,
-  CalendarMonth,
-  DateRange,
-  SelectionMode,
+  ICalendarProps,
+  ICalendarState,
+  ICalendarActions,
+  ICalendarHelpers,
+  ICalendarMonth,
+  IDateRange,
+  TSelectionMode,
   validateDateRange,
   validateDateBounds
 } from '../types';
 import { useVirtualCalendar } from './useVirtualCalendar';
 
-export function useCalendar(props: CalendarProps) {
+export function useCalendar(props: ICalendarProps) {
   const {
     selectionMode = 'range',
     defaultValue = { start: null, end: null },
@@ -39,10 +39,10 @@ export function useCalendar(props: CalendarProps) {
   const validatedDefaultValue = validateDateRange(defaultValue);
 
   // Internal state
-  const [internalSelectedRange, setInternalSelectedRange] = useState<DateRange>(validatedDefaultValue);
+  const [internalSelectedRange, setInternalSelectedRange] = useState<IDateRange>(validatedDefaultValue);
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null);
-  const [internalSelectionMode, setInternalSelectionMode] = useState<SelectionMode>(selectionMode);
-  const [visibleMonths, setVisibleMonths] = useState<CalendarMonth[]>([]);
+  const [internalSelectionMode, setInternalSelectionMode] = useState<TSelectionMode>(selectionMode);
+  const [visibleMonths, setVisibleMonths] = useState<ICalendarMonth[]>([]);
   const [currentMonthIndex, setCurrentMonthIndex] = useState(monthBuffer.before);
   const [isScrolling] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -67,8 +67,8 @@ export function useCalendar(props: CalendarProps) {
   };
 
   // Generate months array
-  const generateMonths = useCallback((): CalendarMonth[] => {
-    const months: CalendarMonth[] = [];
+  const generateMonths = useCallback((): ICalendarMonth[] => {
+    const months: ICalendarMonth[] = [];
     const today = new Date();
 
     // Определяем реальные границы
@@ -190,7 +190,7 @@ export function useCalendar(props: CalendarProps) {
   }, [visibleMonths.length, currentMonthIndex, virtual.virtualizer]);
 
   // Helpers
-  const helpers: CalendarHelpers = {
+  const helpers: ICalendarHelpers = {
     isDateDisabled: (date: Date | null): boolean => {
       if (!date) return true;
       if (minDate && date < minDate) return true;
@@ -223,10 +223,23 @@ export function useCalendar(props: CalendarProps) {
 
     isDateRangeEnd: (date: Date | null): boolean => {
       if (!date || internalSelectionMode === 'single') return false;
-      return Boolean(
-        (selectedRange.start && date.toDateString() === selectedRange.start.toDateString()) ||
-        (selectedRange.end && date.toDateString() === selectedRange.end.toDateString())
-      );
+      
+      // If we have both start and end, check if this is the end date
+      if (selectedRange.end && date.toDateString() === selectedRange.end.toDateString()) {
+        return true;
+      }
+      
+      // If we have start but no end, and we're hovering, check if this is the hovered date (potential end)
+      if (selectedRange.start && !selectedRange.end && hoveredDate && date.toDateString() === hoveredDate.toDateString()) {
+        return true;
+      }
+      
+      return false;
+    },
+
+    isDateRangeStart: (date: Date | null): boolean => {
+      if (!date || internalSelectionMode === 'single') return false;
+      return Boolean(selectedRange.start && date.toDateString() === selectedRange.start.toDateString());
     },
 
     isToday: (date: Date | null): boolean => {
@@ -252,7 +265,7 @@ export function useCalendar(props: CalendarProps) {
   };
 
   // Handle selection change
-  const handleSelectionChange = (newValue: DateRange) => {
+  const handleSelectionChange = (newValue: IDateRange) => {
     const validatedValue = validateDateRange(newValue);
 
     if (value === undefined) {
@@ -262,7 +275,7 @@ export function useCalendar(props: CalendarProps) {
   };
 
   // Actions
-  const actions: CalendarActions = {
+  const actions: ICalendarActions = {
     selectDate: (date: Date) => {
       if (helpers.isDateDisabled(date)) return;
 
@@ -292,7 +305,7 @@ export function useCalendar(props: CalendarProps) {
       setHoveredDate(date);
     },
 
-    setSelectionMode: (mode: SelectionMode) => {
+    setSelectionMode: (mode: TSelectionMode) => {
       setInternalSelectionMode(mode);
       actions.clearSelection();
     },
@@ -314,7 +327,7 @@ export function useCalendar(props: CalendarProps) {
   }, []);
 
   // State object
-  const state: CalendarState = {
+  const state: ICalendarState = {
     selectedRange,
     hoveredDate,
     selectionMode: internalSelectionMode,

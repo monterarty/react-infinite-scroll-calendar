@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Calendar,
-  DateRange
+  IDateRange
 } from 'react-infinite-scroll-calendar';
 
 const cn = (...classes: Array<string | undefined | null | false>) => {
@@ -9,8 +9,8 @@ const cn = (...classes: Array<string | undefined | null | false>) => {
 };
 
 const Example: React.FC = () => {
-  const [selectedRange, setSelectedRange] = useState<DateRange>({ start: null, end: null });
-  const [weekStartsOn, setWeekStartsOn] = useState<0 | 1>(1);
+  const [selectedRange, setSelectedRange] = useState<IDateRange>({ start: null, end: null });
+  const [weekStartsOn, setWeekStartsOn] = useState(1);
 
   const commonProps = {
     value: selectedRange,
@@ -116,7 +116,11 @@ const Example: React.FC = () => {
                         <div
                           key={virtualItem.key}
                           data-index={virtualItem.index}
-                          ref={(el) => el && virtual.virtualizer?.measureElement(el)}
+                          ref={(el) => {
+                            if (el) {
+                              virtual.virtualizer?.measureElement(el);
+                            }
+                          }}
                           style={{
                             position: 'absolute',
                             top: 0,
@@ -148,7 +152,8 @@ const Example: React.FC = () => {
                                         'data-[disabled]:opacity-30 data-[disabled]:cursor-not-allowed data-[disabled]:hover:bg-transparent',
                                         'data-[selected]:bg-gradient-to-br data-[selected]:from-purple-500 data-[selected]:to-blue-500 data-[selected]:text-white data-[selected]:hover:bg-gradient-to-br data-[selected]:hover:from-purple-600 data-[selected]:hover:to-blue-600',
                                         'data-[in-range]:bg-gradient-to-r data-[in-range]:from-purple-100 data-[in-range]:to-blue-100',
-                                        'data-[range-end]:bg-gradient-to-br data-[range-end]:from-purple-600 data-[range-end]:to-blue-600 data-[range-end]:text-white data-[range-end]:font-bold',
+                                        'data-[range-start]:bg-gradient-to-br data-[range-start]:from-green-600 data-[range-start]:to-purple-600 data-[range-start]:text-white data-[range-start]:font-bold data-[range-start]:ring-2 data-[range-start]:ring-green-400',
+                                        'data-[range-end]:bg-gradient-to-br data-[range-end]:from-purple-600 data-[range-end]:to-red-600 data-[range-end]:text-white data-[range-end]:font-bold data-[range-end]:ring-2 data-[range-end]:ring-red-400',
                                         'data-[today]:ring-2 data-[today]:ring-yellow-400 data-[today]:bg-yellow-50'
                                       )}
                                     >

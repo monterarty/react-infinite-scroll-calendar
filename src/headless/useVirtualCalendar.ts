@@ -1,6 +1,6 @@
 import React, {useMemo} from 'react';
 import {useVirtualizer} from '@tanstack/react-virtual';
-import {CalendarMonth} from '../types';
+import {ICalendarMonth} from '../types';
 
 export function useVirtualCalendar({
   months,
@@ -9,7 +9,7 @@ export function useVirtualCalendar({
   estimateSize = 350,
   overscan = 5
 }: {
-  months: CalendarMonth[];
+  months: ICalendarMonth[];
   containerRef: React.RefObject<HTMLDivElement>;
   currentMonthIndex: number;
   estimateSize?: number;

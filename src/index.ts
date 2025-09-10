@@ -6,15 +6,15 @@ export { useCalendar } from './headless/useCalendar';
 
 // Types and Utilities
 export type { 
-  CalendarProps, 
-  DateRange, 
-  SelectionMode,
-  CalendarState,
-  CalendarActions,
-  CalendarHelpers,
-  CalendarRenderProps,
-  CalendarMonth,
-  VirtualItem
+  ICalendarProps,
+  IDateRange,
+  TSelectionMode,
+  ICalendarState,
+  ICalendarActions,
+  ICalendarHelpers,
+  ICalendarRenderProps,
+  ICalendarMonth,
+  TVirtualItem
 } from './types';
 
 export { 

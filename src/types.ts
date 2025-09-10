@@ -1,14 +1,14 @@
 import React from 'react';
 
-export interface DateRange {
+export interface IDateRange {
   start: Date | null;
   end: Date | null;
 }
 
-export type SelectionMode = 'single' | 'range';
+export type TSelectionMode = 'single' | 'range';
 
 // Validation utility functions
-export const validateDateRange = (range: DateRange): DateRange => {
+export const validateDateRange = (range: IDateRange): IDateRange => {
   if (range.start && range.end && range.start > range.end) {
     console.warn('[Calendar] Date range start is greater than end. Swapping values automatically.');
     return { start: range.end, end: range.start };
@@ -38,7 +38,7 @@ export const validateDateBounds = (minDate?: Date, maxDate?: Date): { minDate?: 
  * />
  */
 
-export interface CalendarMonth {
+export interface ICalendarMonth {
   date: Date;
   month: number;
   year: number;
@@ -49,65 +49,66 @@ export interface CalendarMonth {
 }
 
 // Re-export VirtualItem from @tanstack/react-virtual to avoid conflicts
-export type VirtualItem = import('@tanstack/virtual-core').VirtualItem;
+export type TVirtualItem = import('@tanstack/virtual-core').VirtualItem;
 
-export interface CalendarState {
-  selectedRange: DateRange;
+export interface ICalendarState {
+  selectedRange: IDateRange;
   hoveredDate: Date | null;
-  selectionMode: SelectionMode;
-  visibleMonths: CalendarMonth[];
+  selectionMode: TSelectionMode;
+  visibleMonths: ICalendarMonth[];
   currentMonthIndex: number;
   isScrolling: boolean;
   isInitialized: boolean;
 }
 
-export interface CalendarActions {
+export interface ICalendarActions {
   selectDate: (date: Date) => void;
   clearSelection: () => void;
   setHoveredDate: (date: Date | null) => void;
-  setSelectionMode: (mode: SelectionMode) => void;
+  setSelectionMode: (mode: TSelectionMode) => void;
   scrollToMonth: (index: number) => void;
   scrollToToday: () => void;
 }
 
-export interface CalendarHelpers {
+export interface ICalendarHelpers {
   isDateDisabled: (date: Date | null) => boolean;
   isDateInRange: (date: Date | null) => boolean;
   isDateRangeEnd: (date: Date | null) => boolean;
+  isDateRangeStart: (date: Date | null) => boolean;
   isToday: (date: Date | null) => boolean;
   getDaysInRange: () => number;
   formatDate: (date: Date, options?: Intl.DateTimeFormatOptions) => string;
 }
 
-export interface CalendarProps {
-  selectionMode?: SelectionMode;
-  defaultValue?: DateRange;
-  value?: DateRange;
-  onChange?: (value: DateRange) => void;
+export interface ICalendarProps {
+  selectionMode?: TSelectionMode;
+  defaultValue?: IDateRange;
+  value?: IDateRange;
+  onChange?: (value: IDateRange) => void;
   minDate?: Date;
   maxDate?: Date;
   disabledDates?: Date[];
   disabledDays?: number[];
   locale?: string;
-  weekStartsOn?: 0 | 1;
+  weekStartsOn?: number;
   monthNames?: string[];
   dayNames?: string[];
   monthBuffer?: { before: number; after: number };
   minMonth?: Date;
   maxMonth?: Date;
   estimateSize?: number;
-  children?: React.ReactNode | ((props: CalendarRenderProps & { weekdays: string[] }) => React.ReactNode);
+  children?: React.ReactNode | ((props: ICalendarRenderProps & { weekdays: string[] }) => React.ReactNode);
 }
 
-export interface CalendarRenderProps {
-  state: CalendarState;
-  actions: CalendarActions;
-  helpers: CalendarHelpers;
+export interface ICalendarRenderProps {
+  state: ICalendarState;
+  actions: ICalendarActions;
+  helpers: ICalendarHelpers;
   props: {
     containerProps: React.HTMLAttributes<HTMLDivElement>;
   };
   virtual: {
-    virtualItems: VirtualItem[];
+    virtualItems: TVirtualItem[];
     totalSize: number;
     scrollToIndex: (index: number, options?: { align?: 'start' | 'center' | 'end' | 'auto' }) => void;
     scrollToCurrentMonth: () => void;

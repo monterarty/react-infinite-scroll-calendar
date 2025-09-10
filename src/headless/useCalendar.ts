@@ -229,9 +229,18 @@ export function useCalendar(props: ICalendarProps) {
         return true;
       }
       
-      // If we have start but no end, and we're hovering, check if this is the hovered date (potential end)
+      // If we have start but no end, and we're hovering
       if (selectedRange.start && !selectedRange.end && hoveredDate && date.toDateString() === hoveredDate.toDateString()) {
-        return true;
+        // Check if hovered date is after start (making it the end)
+        if (hoveredDate >= selectedRange.start) {
+          return true;
+        }
+      }
+      
+      // If we have start but no end, and we're hovering on a date before start
+      // Then the current start becomes the end
+      if (selectedRange.start && !selectedRange.end && hoveredDate && hoveredDate < selectedRange.start && date.toDateString() === selectedRange.start.toDateString()) {
+        return true; // Current start becomes end
       }
       
       return false;
@@ -239,7 +248,25 @@ export function useCalendar(props: ICalendarProps) {
 
     isDateRangeStart: (date: Date | null): boolean => {
       if (!date || internalSelectionMode === 'single') return false;
-      return Boolean(selectedRange.start && date.toDateString() === selectedRange.start.toDateString());
+      
+      // If we have both start and end, check if this is the start date
+      if (selectedRange.start && date.toDateString() === selectedRange.start.toDateString()) {
+        // But if we're hovering and hover is before start, then start will become end
+        if (selectedRange.start && !selectedRange.end && hoveredDate && hoveredDate < selectedRange.start) {
+          return false; // This will become the end, not start
+        }
+        return true;
+      }
+      
+      // If we have start but no end, and we're hovering on a date before start
+      if (selectedRange.start && !selectedRange.end && hoveredDate && date.toDateString() === hoveredDate.toDateString()) {
+        // Check if hovered date is before start (making it the new start)
+        if (hoveredDate < selectedRange.start) {
+          return true;
+        }
+      }
+      
+      return false;
     },
 
     isToday: (date: Date | null): boolean => {

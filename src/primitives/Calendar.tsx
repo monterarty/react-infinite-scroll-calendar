@@ -204,7 +204,7 @@ const CalendarGrid = forwardRef<HTMLDivElement, CalendarGridProps>(
         className={cn('calendar-grid', className)}
         data-calendar-grid=""
         {...context.props.containerProps}
-        style={{ height: '400px', overflow: 'auto', position: 'relative' }}
+        style={{ overflow: 'auto', position: 'relative' }}
       >
         <div 
           style={{ 

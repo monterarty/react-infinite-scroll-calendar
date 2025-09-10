@@ -26,11 +26,6 @@ pnpm add react-infinite-scroll-calendar
 - `react >= 16.8.0`
 - `react-dom >= 16.8.0`
 
-### Peer Dependencies
-
-```bash
-npm install react react-dom @tanstack/react-virtual
-```
 
 ## Quick Start
 
@@ -257,6 +252,11 @@ npm start
 MIT © [monterarty](https://github.com/monterarty)
 
 ## Changelog
+
+### 1.1.6
+- ✅ Fixed height calculation issues preventing proper layout
+- ✅ Improved month generation to support custom date ranges
+- ✅ Enhanced stability and performance optimizations
 
 ### 1.1.0
 - **BREAKING**: Removed headless `useCalendar` hook - focus on Radix-style primitives only

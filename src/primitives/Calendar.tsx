@@ -286,7 +286,13 @@ const CalendarDay = forwardRef<HTMLButtonElement, CalendarDayProps>(
     const { state, actions, helpers } = useCalendarContext();
     
     const isDisabled = disabledProp || helpers.isDateDisabled(date);
-    const isSelected = helpers.isDateInRange(date);
+    
+    // In single mode, selected means the single selected date
+    // In range mode, selected means any date in the range (same as isInRange)
+    const isSelected = state.selectionMode === 'single' 
+      ? Boolean(date && state.selectedRange.start && date.toDateString() === state.selectedRange.start.toDateString())
+      : helpers.isDateInRange(date);
+      
     const isInRange = helpers.isDateInRange(date);
     const isRangeEnd = helpers.isDateRangeEnd(date);
     const isRangeStart = helpers.isDateRangeStart(date);

@@ -204,8 +204,9 @@ export function useCalendar(props: ICalendarProps) {
     isDateInRange: (date: Date | null): boolean => {
       if (!date || !selectedRange.start) return false;
 
+      // In single mode, there's no range concept
       if (internalSelectionMode === 'single') {
-        return selectedRange.start && date.toDateString() === selectedRange.start.toDateString();
+        return false;
       }
 
       if (selectedRange.start && selectedRange.end) {

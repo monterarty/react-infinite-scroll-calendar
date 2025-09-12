@@ -38,6 +38,10 @@ export const validateDateBounds = (minDate?: Date, maxDate?: Date): { minDate?: 
  * />
  */
 
+export type TCalendarDay = Date | null;
+
+export type TCalendarWeek = TCalendarDay[]
+
 export interface ICalendarMonth {
   date: Date;
   month: number;
@@ -45,7 +49,8 @@ export interface ICalendarMonth {
   monthName: string;
   monthNameShort: string;
   monthYear: string;
-  days: Array<Date | null>;
+  weeks: TCalendarWeek[];
+  days: TCalendarDay[];
 }
 
 // Re-export VirtualItem from @tanstack/react-virtual to avoid conflicts

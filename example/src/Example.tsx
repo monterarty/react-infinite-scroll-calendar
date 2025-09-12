@@ -3,7 +3,7 @@ import {
   Calendar,
   IDateRange
 } from 'react-infinite-scroll-calendar';
-import { RangeMask } from './RangeMask';
+import { RangeMask } from './components/RangeMask';
 
 const cn = (...classes: Array<string | undefined | null | false>) => {
   return classes.filter(Boolean).join(' ');
@@ -32,189 +32,127 @@ const Example: React.FC = () => {
       title: 'Primitive Components (Radix Style)',
       description: 'Полный контроль с data-атрибутами для стилизации',
       component: (
-        <Calendar.Root {...commonProps} className="max-w-md bg-white rounded-xl shadow-lg overflow-hidden">
-          {({ state, actions }) => (
-            <div>
-              <Calendar.Header className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-6">
-                {() => (
-                  <div className="text-center">
-                    <div className="flex justify-center gap-3 mb-3">
-                      <button 
-                        onClick={() => actions.setSelectionMode('single')}
-                        className={cn(
-                          'px-4 py-2 rounded-full text-sm font-medium transition-all',
-                          state.selectionMode === 'single' 
-                            ? 'bg-white text-purple-600 shadow-lg' 
-                            : 'bg-purple-500 hover:bg-purple-400'
-                        )}
-                      >
-                        Одна дата
-                      </button>
-                      <button 
-                        onClick={() => actions.setSelectionMode('range')}
-                        className={cn(
-                          'px-4 py-2 rounded-full text-sm font-medium transition-all',
-                          state.selectionMode === 'range' 
-                            ? 'bg-white text-blue-600 shadow-lg' 
-                            : 'bg-blue-500 hover:bg-blue-400'
-                        )}
-                      >
-                        Диапазон
-                      </button>
-                      <button 
-                        onClick={actions.clearSelection}
-                        className="px-4 py-2 bg-red-500 hover:bg-red-400 rounded-full text-sm font-medium transition-colors"
-                      >
-                        Очистить
-                      </button>
-                    </div>
-                    
-                    <div className="flex justify-center gap-2">
-                      <button 
-                        onClick={() => setWeekStartsOn(1)}
-                        className={cn(
-                          'px-3 py-1 rounded-full text-xs font-medium transition-all',
-                          weekStartsOn === 1 
-                            ? 'bg-white text-green-600 shadow-lg' 
-                            : 'bg-green-500 hover:bg-green-400'
-                        )}
-                      >
-                        Пн-Вс
-                      </button>
-                      <button 
-                        onClick={() => setWeekStartsOn(0)}
-                        className={cn(
-                          'px-3 py-1 rounded-full text-xs font-medium transition-all',
-                          weekStartsOn === 0 
-                            ? 'bg-white text-orange-600 shadow-lg' 
-                            : 'bg-orange-500 hover:bg-orange-400'
-                        )}
-                      >
-                        Вс-Сб
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </Calendar.Header>
-
-              <Calendar.Weekdays className="grid grid-cols-7 bg-gray-50 border-b">
+          <Calendar.Root
+              {...commonProps}
+              className={cn(
+                  "w-full overflow-hidden rounded-xl bg-white pt-2",
+              )}
+          >
+            <div className="flex h-full flex-col">
+              <Calendar.Weekdays className="bg-white flex justify-between pt-[1px]">
                 {({ weekdays }) => (
-                  <>
-                    {weekdays.map((day, idx) => (
-                      <div key={idx} className="text-center py-3 text-sm font-semibold text-gray-600">
-                        {day}
-                      </div>
-                    ))}
-                  </>
+                    <>
+                      {weekdays.map((day, idx) => (
+                          <div
+                              key={idx}
+                              className="text-gray-500 w-10 py-2 text-center text-xs/[16px] uppercase"
+                          >
+                            <div className="">{day}</div>
+                          </div>
+                      ))}
+                    </>
                 )}
               </Calendar.Weekdays>
 
-              <Calendar.Grid className="h-80">
-                {({ months, virtual, helpers }) => {
-                  return (
-                    <div style={{ height: virtual.totalSize, position: 'relative', width: '100%' }}>
-                      {virtual.virtualItems.map((virtualItem) => {
+              <Calendar.Grid className="no-scrollbar h-80">
+                {({ gridWidth, helpers, months, virtual }) => (
+                      virtual.virtualItems.map((virtualItem) => {
                         const month = months[virtualItem.index];
                         return (
-                        <div
-                          key={virtualItem.key}
-                          data-index={virtualItem.index}
-                          ref={(el) => {
-                            if (el) {
-                              virtual.virtualizer?.measureElement(el);
-                            }
-                          }}
-                          style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            width: '100%',
-                            minHeight: `${virtualItem.size}px`,
-                            transform: `translateY(${virtualItem.start}px)`,
-                          }}
-                        >
-                          <Calendar.Month month={month}>
-                            {({ month: monthData }) => {
-                              const rangeGeometry = helpers.getRangeGeometry();
-                              const monthRanges = rangeGeometry?.ranges.filter(r => r.monthIndex === virtualItem.index) || [];
-                              
-                              return (
-                                <div className="p-2 min-h-fit">
-                                  <div className="text-center mb-3">
-                                    <div className="font-bold text-gray-800 text-xl">
-                                      {monthData.monthName}
-                                    </div>
-                                    <div className="text-sm text-gray-500 font-medium">
-                                      {monthData.monthYear}
-                                    </div>
-                                  </div>
-                                  <div className="grid grid-cols-7 pb-2 relative">
-                                  {/* SVG маска для этого месяца (опционально) */}
-                                    {showRangeMask && monthRanges.length > 0 && (
-                                      <RangeMask
-                                          className="z-40"
-                                        geometry={{
-                                          ranges: monthRanges,
-                                          gridWidth: 7,
-                                          cellSize: { width: 48, height: 48 }
-                                        }} 
-                                      />
-                                    )}
-                                  {monthData.days.map((day, dayIdx) => (
-                                    <Calendar.Day 
-                                      key={dayIdx} 
-                                      date={day}
-                                      className={cn(
-                                        'h-12 min-h-[48px] max-h-[48px] w-full rounded-lg border-0 text-sm font-medium transition-colors duration-200 flex items-center justify-center',
-                                        'hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-400',
-                                        'data-[disabled]:opacity-30 data-[disabled]:cursor-not-allowed data-[disabled]:hover:bg-transparent',
-                                        'data-[selected]:bg-gradient-to-br data-[selected]:from-purple-500 data-[selected]:to-blue-500 data-[selected]:text-white data-[selected]:hover:bg-gradient-to-br data-[selected]:hover:from-purple-600 data-[selected]:hover:to-blue-600 data-[selected]:z-10 data-[selected]:relative',
-                                        'data-[in-range]:bg-gradient-to-r data-[in-range]:from-purple-100 data-[in-range]:to-blue-100 data-[in-range]:z-10 data-[in-range]:relative',
-                                        'data-[range-start]:bg-gradient-to-br data-[range-start]:from-green-600 data-[range-start]:to-purple-600 data-[range-start]:text-white data-[range-start]:font-bold data-[range-start]:ring-2 data-[range-start]:ring-green-400 data-[range-start]:z-10 data-[range-start]:relative',
-                                        'data-[range-end]:bg-gradient-to-br data-[range-end]:from-purple-600 data-[range-end]:to-red-600 data-[range-end]:text-white data-[range-end]:font-bold data-[range-end]:ring-2 data-[range-end]:ring-red-400 data-[range-end]:z-10 data-[range-end]:relative',
-                                        'data-[today]:ring-2 data-[today]:ring-yellow-400 data-[today]:bg-yellow-50'
-                                      )}
-                                    >
-                                      {({ dayNumber }) => dayNumber}
-                                    </Calendar.Day>
-                                  ))}
-                                </div>
-                              </div>
-                            );
-                            }}
-                          </Calendar.Month>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  );
-                }}
-              </Calendar.Grid>
+                            <div
+                                key={virtualItem.key}
+                                ref={(el) => {
+                                  if (el) {
+                                    virtual.virtualizer?.measureElement(el);
+                                  }
+                                }}
+                                data-index={virtualItem.index}
+                                style={{
+                                  left: 0,
+                                  minHeight: `${virtualItem.size}px`,
+                                  position: "absolute",
+                                  top: 0,
+                                  transform: `translateY(${virtualItem.start}px)`,
+                                  width: "100%",
+                                }}
+                            >
+                              <Calendar.Month month={month}>
+                                {({ month: monthData }) => {
+                                  const rangeGeometry = helpers.getRangeGeometry();
+                                  const monthRanges =
+                                      rangeGeometry?.ranges.filter(
+                                          (r) => r.monthIndex === virtualItem.index,
+                                      ) || [];
 
-              <Calendar.SelectionInfo className="bg-gradient-to-r from-gray-50 to-blue-50 p-4 border-t">
-                {({ selectedRange, formatDate, daysInRange }) => (
-                  <div className="text-center">
-                    {selectedRange.start ? (
-                      <div className="space-y-1">
-                        <div className="font-medium text-gray-800">
-                          {formatDate(selectedRange.start)}
-                          {selectedRange.end && ` — ${formatDate(selectedRange.end)}`}
-                        </div>
-                        {selectedRange.end && (
-                          <div className="text-sm text-purple-600 font-medium">
-                            {daysInRange} {daysInRange === 1 ? 'день' : daysInRange < 5 ? 'дня' : 'дней'}
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="text-gray-500">Выберите даты</div>
-                    )}
-                  </div>
+                                  return (
+                                      <div className="flex h-full flex-col pt-7">
+                                        <div className="h2 text-black mb-5 flex-shrink-0 text-center font-bold capitalize">
+                                          {monthData.monthName} {monthData.monthYear}
+                                        </div>
+                                        <div className="relative">
+                                          <RangeMask
+                                              className="z-40"
+                                              geometry={{
+                                                cellSize: { height: 44, width: 44 },
+                                                gridWidth,
+                                                ranges: monthRanges,
+                                              }}
+                                              pathClassName="fill-blue-100/50"
+                                          />
+
+                                          {monthData.weeks.map((weekDays, weekIdx) => {
+                                            return (
+                                                <div
+                                                    key={weekIdx}
+                                                    className="flex justify-between"
+                                                >
+                                                  {weekDays.map((day, dayIdx) => (
+                                                      <Calendar.Day
+                                                          key={dayIdx}
+                                                          className={cn(
+                                                              "relative flex h-11 items-center justify-center text-sm",
+                                                              "data-[disabled]:text-gray-400 data-[disabled]:cursor-not-allowed data-[disabled]:hover:bg-transparent",
+                                                              "[&>div]:data-[range-start]:bg-blue-600 [&>div]:data-[range-start]:text-white [&>div]:data-[range-start]:rounded-xl",
+                                                              "[&>div]:data-[range-end]:bg-blue-600 [&>div]:data-[range-end]:text-white [&>div]:data-[range-end]:rounded-xl",
+                                                              "[&>div]:data-[today]:after:content-[''] [&>div]:data-[today]:after:absolute [&>div]:data-[today]:after:bottom-[6px] [&>div]:data-[today]:after:left-1/2",
+                                                              "[&>div]:data-[today]:after:-translate-x-1/2 [&>div]:data-[today]:after:w-1 [&>div]:data-[today]:after:h-1",
+                                                              "[&>div]:data-[today]:after:bg-blue-600 [&>div]:data-[today]:after:rounded-full [&>div]:data-[today]:after:z-30",
+                                                          )}
+                                                          date={day}
+                                                      >
+                                                        {({ dayNumber }) =>
+                                                            dayNumber ? (
+                                                                <div
+                                                                    className={cn(
+                                                                        "relative flex h-11 w-11 items-center rounded-xl justify-center transition-colors duration-200",
+                                                                        "hover:bg-gray-100 focus:outline-none",
+                                                                    )}
+                                                                >
+                                                                    <span className="relative z-20">
+                                                                      {dayNumber}
+                                                                    </span>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="h-11 w-11" />
+                                                            )
+                                                        }
+                                                      </Calendar.Day>
+                                                  ))}
+                                                </div>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                  );
+                                }}
+                              </Calendar.Month>
+                            </div>
+                        );
+                      })
                 )}
-              </Calendar.SelectionInfo>
+              </Calendar.Grid>
             </div>
-          )}
-        </Calendar.Root>
+          </Calendar.Root>
       )
     }
   ];

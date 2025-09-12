@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { 
+import {
   ICalendarProps,
   ICalendarState,
   ICalendarActions,
@@ -8,9 +8,10 @@ import {
   IDateRange,
   TSelectionMode,
   validateDateRange,
-  validateDateBounds
+  validateDateBounds, TCalendarDay, TCalendarWeek
 } from '../types';
 import { useVirtualCalendar } from './useVirtualCalendar';
+import {COUNT_DAYS_IN_WEEK} from "../const";
 
 export function useCalendar(props: ICalendarProps) {
   const {
@@ -34,7 +35,7 @@ export function useCalendar(props: ICalendarProps) {
   // Validate and fix date bounds
   const { minDate, maxDate } = validateDateBounds(rawMinDate, rawMaxDate);
   const { minDate: minMonth, maxDate: maxMonth } = validateDateBounds(rawMinMonth, rawMaxMonth);
-  
+
   // Validate defaultValue range
   const validatedDefaultValue = validateDateRange(defaultValue);
 
@@ -99,10 +100,12 @@ export function useCalendar(props: ICalendarProps) {
     // Генерируем месяцы от startDate до endDate
     const currentDate = new Date(startDate);
     while (currentDate <= endDate) {
-      const monthName = currentDate.toLocaleDateString(locale, { month: 'long' });
-      const monthNameShort = currentDate.toLocaleDateString(locale, { month: 'short' });
-      const monthYear = currentDate.toLocaleDateString(locale, { year: 'numeric' });
-      
+      const monthName = currentDate.toLocaleDateString(locale, {month: 'long'});
+      const monthNameShort = currentDate.toLocaleDateString(locale, {month: 'short'});
+      const monthYear = currentDate.toLocaleDateString(locale, {year: 'numeric'});
+      const days = getDaysInMonth(currentDate.getFullYear(), currentDate.getMonth());
+      const weeks = getWeeksInMonth(days);
+
       months.push({
         date: new Date(currentDate),
         month: currentDate.getMonth(),
@@ -110,7 +113,8 @@ export function useCalendar(props: ICalendarProps) {
         monthName,
         monthNameShort,
         monthYear,
-        days: getDaysInMonth(currentDate.getFullYear(), currentDate.getMonth())
+        weeks,
+        days
       });
 
       // Переходим к следующему месяцу
@@ -119,6 +123,24 @@ export function useCalendar(props: ICalendarProps) {
     
     return months;
   }, [locale, monthBuffer.before, monthBuffer.after, weekStartsOn, minDate, maxDate, minMonth, maxMonth]);
+
+  // Generate weeks
+const getWeeksInMonth = (days: TCalendarDay[]):TCalendarWeek[] => {
+  return Array.from({
+    length: Math.ceil(days.length / COUNT_DAYS_IN_WEEK),
+  }).map((_, weekIdx) => {
+    const weekDays = days.slice(
+        weekIdx * COUNT_DAYS_IN_WEEK,
+        (weekIdx + 1) * COUNT_DAYS_IN_WEEK,
+    );
+
+    while (weekDays.length < COUNT_DAYS_IN_WEEK) {
+      weekDays.push(null);
+    }
+
+    return weekDays;
+  })
+}
 
   // Generate days in month
   const getDaysInMonth = (year: number, month: number): Array<Date | null> => {

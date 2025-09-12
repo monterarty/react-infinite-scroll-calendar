@@ -254,7 +254,15 @@ const CalendarGrid = forwardRef<HTMLDivElement, CalendarGridProps>(
             transition: 'opacity 200ms ease-in-out'
           }}
         >
+            <div
+                style={{
+                    height: gridProps.virtual.totalSize,
+                    position: "relative",
+                    width: "100%",
+                }}
+            >
           {content}
+                </div>
         </div>
         {!context.state.isInitialized && (
           <div className="absolute inset-0 flex items-center justify-center bg-white">

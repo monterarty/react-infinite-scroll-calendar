@@ -1,0 +1,1 @@
+export const COUNT_DAYS_IN_WEEK = 7;

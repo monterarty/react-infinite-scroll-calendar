@@ -103,6 +103,22 @@ export interface IRangeSegment {
   dates: Date[];
 }
 
+export type TDisabledDate = 
+  | Date
+  | Date[]
+  | {
+      from?: Date;
+      to?: Date;
+    }
+  | {
+      before?: Date;
+      after?: Date;
+    }
+  | {
+      dayOfWeek?: number[];
+    }
+  | boolean;
+
 export interface ICalendarProps {
   selectionMode?: TSelectionMode;
   defaultValue?: IDateRange;
@@ -110,8 +126,7 @@ export interface ICalendarProps {
   onChange?: (value: IDateRange) => void;
   minDate?: Date;
   maxDate?: Date;
-  disabledDates?: Date[];
-  disabledDays?: number[];
+  disabled?: TDisabledDate;
   locale?: string;
   weekStartsOn?: number;
   monthNames?: string[];

@@ -21,8 +21,7 @@ export function useCalendar(props: ICalendarProps) {
     onChange,
     minDate: rawMinDate,
     maxDate: rawMaxDate,
-    disabledDates = [],
-    disabledDays = [],
+    disabled,
     locale = 'ru-RU',
     weekStartsOn = 0,
     dayNames,
@@ -196,6 +195,74 @@ const getWeeksInMonth = (days: TCalendarDay[]):TCalendarWeek[] => {
     setCurrentMonthIndex(indexToUse);
   }, [generateMonths, selectedRange.start]);
 
+  // Helper function to check if date is disabled according to new flexible API
+  const isDateDisabledByRule = useCallback((date: Date | null): boolean => {
+    if (!date) return true;
+    
+    // Check basic bounds first
+    if (minDate && date < minDate) return true;
+    if (maxDate && date > maxDate) return true;
+    
+    // Handle new flexible disabled prop
+    if (disabled === undefined) return false;
+    
+    // If disabled is boolean true, disable all dates
+    if (disabled === true) return true;
+    if (disabled === false) return false;
+    
+    // If disabled is a Date, check exact match
+    if (disabled instanceof Date) {
+      return date.toDateString() === disabled.toDateString();
+    }
+    
+    // If disabled is an array of dates
+    if (Array.isArray(disabled)) {
+      return disabled.some(disabledDate => date.toDateString() === disabledDate.toDateString());
+    }
+    
+    // If disabled is an object with various rules
+    if (typeof disabled === 'object') {
+      // Range: { from, to } - disable dates within range (inclusive)
+      if ('from' in disabled && 'to' in disabled) {
+        const { from, to } = disabled;
+        if (from && to) {
+          return date >= from && date <= to;
+        }
+        if (from && !to) {
+          return date >= from;
+        }
+        if (!from && to) {
+          return date <= to;
+        }
+      }
+      
+      // Combined before/after: { before, after } - disable dates outside range
+      if ('before' in disabled && 'after' in disabled) {
+        const { before, after } = disabled;
+        if (before && after) {
+          return date < before || date > after;
+        }
+      }
+      
+      // Before only: { before } - disable dates before specified date
+      if ('before' in disabled && !('after' in disabled) && disabled.before) {
+        return date < disabled.before;
+      }
+      
+      // After only: { after } - disable dates after specified date  
+      if ('after' in disabled && !('before' in disabled) && disabled.after) {
+        return date > disabled.after;
+      }
+      
+      // Day of week: { dayOfWeek } - disable specific days of week
+      if ('dayOfWeek' in disabled && disabled.dayOfWeek) {
+        return disabled.dayOfWeek.includes(date.getDay());
+      }
+    }
+    
+    return false;
+  }, [disabled, minDate, maxDate]);
+
   // Virtual calendar integration
   const virtual = useVirtualCalendar({
     months: visibleMonths,
@@ -223,15 +290,7 @@ const getWeeksInMonth = (days: TCalendarDay[]):TCalendarWeek[] => {
 
   // Helpers
   const helpers: ICalendarHelpers = {
-    isDateDisabled: (date: Date | null): boolean => {
-      if (!date) return true;
-      if (minDate && date < minDate) return true;
-      if (maxDate && date > maxDate) return true;
-      if (disabledDays.includes(date.getDay())) return true;
-      return disabledDates.some(
-        disabledDate => date.toDateString() === disabledDate.toDateString()
-      );
-    },
+    isDateDisabled: isDateDisabledByRule,
 
     isDateInRange: (date: Date | null): boolean => {
       if (!date || !selectedRange.start) return false;

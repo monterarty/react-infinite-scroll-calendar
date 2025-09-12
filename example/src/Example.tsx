@@ -13,14 +13,35 @@ const Example: React.FC = () => {
   const [selectedRange, setSelectedRange] = useState<IDateRange>({ start: null, end: null });
   const [weekStartsOn, setWeekStartsOn] = useState(1);
   const [showRangeMask, setShowRangeMask] = useState(true); // Переключатель для маски
+  const [disableMode, setDisableMode] = useState<'future' | 'past' | 'weekends' | 'holidays' | 'range'>('future');
+
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+
+  const getDisabledConfig = () => {
+    switch (disableMode) {
+      case 'future':
+        return { after: today }; // Disable all dates after today
+      case 'past':
+        return { before: tomorrow }; // Disable all dates before tomorrow
+      case 'weekends':
+        return { dayOfWeek: [0, 6] }; // Disable weekends (Sunday=0, Saturday=6)
+      case 'holidays':
+        return [new Date('2024-12-25'), new Date('2025-01-01'), new Date('2025-01-07')]; // Specific holiday dates
+      case 'range':
+        return { from: new Date('2024-12-20'), to: new Date('2025-01-10') }; // Holiday period range
+      default:
+        return undefined;
+    }
+  };
 
   const commonProps = {
     value: selectedRange,
     onChange: setSelectedRange,
     minDate: new Date('2024-09-01'), // minimum - 1 september 2024
     maxDate: new Date('2025-12-31'), // maximum - 31 december 2025
-    disabledDays: [0, 6], // weekends disabled
-    disabledDates: [new Date('2024-12-25'), new Date('2024-12-31')], // holidays disabled
+    disabled: getDisabledConfig(), // Use new flexible disabled API
     locale: 'ru-RU',
     weekStartsOn,
     estimateSize: 320
@@ -177,10 +198,55 @@ const Example: React.FC = () => {
               {examples[0].description}
             </p>
           </div>
+
+          {/* Disable Mode Controls */}
+          <div className="mb-6 p-4 bg-gray-50 rounded-xl">
+            <h3 className="font-semibold text-gray-700 mb-3">Режимы блокировки дат:</h3>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { key: 'future', label: 'После сегодня', desc: 'disabled={{ after: today }}' },
+                { key: 'past', label: 'До сегодня', desc: 'disabled={{ before: today }}' },
+                { key: 'weekends', label: 'Выходные', desc: 'disabled={{ dayOfWeek: [0, 6] }}' },
+                { key: 'holidays', label: 'Праздники', desc: 'disabled={[date1, date2, ...]}' },
+                { key: 'range', label: 'Период', desc: 'disabled={{ from: date1, to: date2 }}' }
+              ].map(mode => (
+                <button
+                  key={mode.key}
+                  onClick={() => setDisableMode(mode.key as any)}
+                  className={cn(
+                    "px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                    disableMode === mode.key
+                      ? "bg-blue-600 text-white"
+                      : "bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
+                  )}
+                  title={mode.desc}
+                >
+                  {mode.label}
+                </button>
+              ))}
+            </div>
+            <div className="mt-2 text-xs text-gray-600">
+              Текущая конфигурация: <code className="bg-gray-200 px-2 py-1 rounded">
+                disabled={JSON.stringify(getDisabledConfig()).replace(/"/g, "'")}
+              </code>
+            </div>
+          </div>
           
           <div className="flex justify-center">
             {examples[0].component}
           </div>
+
+          {/* Info about selected range */}
+          {(selectedRange.start || selectedRange.end) && (
+            <div className="mt-4 p-3 bg-blue-50 rounded-lg text-center">
+              <p className="text-sm text-blue-700">
+                <strong>Выбранный период:</strong>
+                {' '}
+                {selectedRange.start?.toLocaleDateString('ru-RU')}
+                {selectedRange.end && ` — ${selectedRange.end.toLocaleDateString('ru-RU')}`}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Feature Highlights */}

@@ -193,8 +193,9 @@ interface CalendarProps {
   onChange?: (value: DateRange) => void;
   minDate?: Date;
   maxDate?: Date;
-  disabledDates?: Date[];
-  disabledDays?: number[]; // 0 = Sunday, 6 = Saturday
+  disabled?: DisabledDate; // NEW: Flexible date blocking API
+  disabledDates?: Date[]; // DEPRECATED: Use 'disabled' instead
+  disabledDays?: number[]; // DEPRECATED: Use 'disabled' with dayOfWeek instead
   locale?: string;
   weekStartsOn?: 0 | 1;
   monthNames?: string[];
@@ -202,6 +203,66 @@ interface CalendarProps {
   monthBuffer?: { before: number; after: number };
 }
 ```
+
+#### DisabledDate
+
+```tsx
+type DisabledDate = 
+  | boolean              // true = disable all, false = disable none
+  | Date                 // Disable specific date  
+  | Date[]               // Disable array of dates
+  | {
+      from?: Date;       // Disable range from date (inclusive)
+      to?: Date;         // Disable range to date (inclusive)
+    }
+  | {
+      before?: Date;     // Disable dates before specified date
+      after?: Date;      // Disable dates after specified date
+    }
+  | {
+      dayOfWeek?: number[]; // Disable specific days of week (0=Sunday, 6=Saturday)
+    }
+```
+
+#### Examples of the Disabled API
+
+```tsx
+// Disable all dates
+<Calendar.Root disabled />
+
+// Disable a specific date
+<Calendar.Root disabled={new Date(2024, 11, 25)} />
+
+// Disable an array of dates  
+<Calendar.Root disabled={[
+  new Date(2024, 11, 25), 
+  new Date(2024, 11, 31),
+  new Date(2025, 0, 1)
+]} />
+
+// Disable a range of dates (holiday period)
+<Calendar.Root disabled={{ 
+  from: new Date(2024, 11, 20), 
+  to: new Date(2025, 0, 10) 
+}} />
+
+// Disable weekends
+<Calendar.Root disabled={{ dayOfWeek: [0, 6] }} />
+
+// Disable dates before today (past dates)
+<Calendar.Root disabled={{ before: new Date() }} />
+
+// Disable dates after today (future dates)  
+<Calendar.Root disabled={{ after: new Date() }} />
+
+// Disable dates outside a specific range
+<Calendar.Root disabled={{ 
+  before: new Date(2024, 0, 1), 
+  after: new Date(2024, 11, 31) 
+}} />
+```
+
+> **Note**: The new `disabled` prop replaces both `disabledDates` and `disabledDays`. The old props are still supported for backward compatibility but are deprecated.
 
 #### DateRange
 
@@ -250,27 +311,3 @@ npm start
 ## License
 
 MIT © [monterarty](https://github.com/monterarty)
-
-## Changelog
-
-### 1.1.6
-- ✅ Fixed height calculation issues preventing proper layout
-- ✅ Improved month generation to support custom date ranges
-- ✅ Enhanced stability and performance optimizations
-
-### 1.1.0
-- **BREAKING**: Removed headless `useCalendar` hook - focus on Radix-style primitives only
-- ✅ Fixed virtual scrolling initialization flickering
-- ✅ Added smooth loading animation during initialization  
-- ✅ Removed all console.log statements for production
-- ✅ Improved TypeScript definitions
-- ✅ Cleaned repository structure
-- ✅ Production-ready build optimizations
-
-### 1.0.0
-- Initial release
-- Radix UI-style compound components
-- Data attributes for styling
-- TypeScript support
-- Virtual infinite scroll functionality
-- i18n support

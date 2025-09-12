@@ -1,6 +1,6 @@
 {
   "name": "react-infinite-scroll-calendar",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Modern React calendar component with Radix UI-style primitives. Full control over styling and behavior with compound components pattern.",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",

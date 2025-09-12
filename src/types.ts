@@ -89,7 +89,6 @@ export interface ICalendarHelpers {
 
 export interface IRangeGeometry {
   ranges: IRangeSegment[];
-  gridWidth: number; // количество колонок (дней в неделе)
   cellSize: { width: number; height: number };
 }
 

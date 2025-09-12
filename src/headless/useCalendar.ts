@@ -11,7 +11,7 @@ import {
   validateDateBounds, TCalendarDay, TCalendarWeek
 } from '../types';
 import { useVirtualCalendar } from './useVirtualCalendar';
-import {COUNT_DAYS_IN_WEEK} from "../const";
+import {COUNT_DAYS_IN_WEEK, FIRST_DAY_OF_WEEK, LAST_DAY_OF_WEEK} from "../const";
 
 export function useCalendar(props: ICalendarProps) {
   const {
@@ -57,9 +57,9 @@ export function useCalendar(props: ICalendarProps) {
     if (dayNames) return dayNames;
     
     const names = [];
-    const date = new Date(2024, 0, weekStartsOn === 1 ? 1 : 7); // Start from Monday or Sunday
+    const date = new Date(2024, 0, weekStartsOn === FIRST_DAY_OF_WEEK ? FIRST_DAY_OF_WEEK : LAST_DAY_OF_WEEK); // Start from Monday or Sunday
     
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < COUNT_DAYS_IN_WEEK; i++) {
       const dayDate = new Date(date);
       dayDate.setDate(date.getDate() + i);
       names.push(dayDate.toLocaleDateString(locale, { weekday: 'short' }));
@@ -72,7 +72,7 @@ export function useCalendar(props: ICalendarProps) {
     const months: ICalendarMonth[] = [];
     const today = new Date();
 
-    // Определяем реальные границы
+    // Determine actual date bounds
     const actualMinDate = minMonth || minDate;
     const actualMaxDate = maxMonth || maxDate;
 
@@ -80,24 +80,24 @@ export function useCalendar(props: ICalendarProps) {
     let endDate: Date;
 
     if (actualMinDate && actualMaxDate) {
-      // Если заданы обе границы, используем их
+      // If both bounds are set, use them
       startDate = new Date(actualMinDate.getFullYear(), actualMinDate.getMonth(), 1);
       endDate = new Date(actualMaxDate.getFullYear(), actualMaxDate.getMonth(), 1);
     } else if (actualMinDate) {
-      // Если задана только минимальная дата, генерируем вперед с буфером
+      // If only minimum date is set, generate forward with buffer
       startDate = new Date(actualMinDate.getFullYear(), actualMinDate.getMonth(), 1);
       endDate = new Date(today.getFullYear(), today.getMonth() + monthBuffer.after, 1);
     } else if (actualMaxDate) {
-      // Если задана только максимальная дата, генерируем назад с буфером
+      // If only maximum date is set, generate backward with buffer
       startDate = new Date(today.getFullYear(), today.getMonth() - monthBuffer.before, 1);
       endDate = new Date(actualMaxDate.getFullYear(), actualMaxDate.getMonth(), 1);
     } else {
-      // Если границы не заданы, используем буфер от текущей даты
+      // If no bounds are set, use buffer from current date
       startDate = new Date(today.getFullYear(), today.getMonth() - monthBuffer.before, 1);
       endDate = new Date(today.getFullYear(), today.getMonth() + monthBuffer.after, 1);
     }
 
-    // Генерируем месяцы от startDate до endDate
+    // Generate months from startDate to endDate
     const currentDate = new Date(startDate);
     while (currentDate <= endDate) {
       const monthName = currentDate.toLocaleDateString(locale, {month: 'long'});
@@ -117,7 +117,7 @@ export function useCalendar(props: ICalendarProps) {
         days
       });
 
-      // Переходим к следующему месяцу
+      // Move to next month
       currentDate.setMonth(currentDate.getMonth() + 1);
     }
     
@@ -173,18 +173,28 @@ const getWeeksInMonth = (days: TCalendarDay[]):TCalendarWeek[] => {
   useEffect(() => {
     const months = generateMonths();
     setVisibleMonths(months);
-    // Найти индекс текущего месяца в сгенерированном списке
-    const today = new Date();
-    const currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    
+    // Determine which month to scroll to
+    let targetDate: Date;
+    
+    // If there's a provided range value and start date
+    if (selectedRange.start) {
+      targetDate = new Date(selectedRange.start.getFullYear(), selectedRange.start.getMonth(), 1);
+    } else {
+      // Otherwise scroll to current month
+      const today = new Date();
+      targetDate = new Date(today.getFullYear(), today.getMonth(), 1);
+    }
+    
     const foundIndex = months.findIndex(month => 
-      month.date.getFullYear() === currentMonth.getFullYear() && 
-      month.date.getMonth() === currentMonth.getMonth()
+      month.date.getFullYear() === targetDate.getFullYear() && 
+      month.date.getMonth() === targetDate.getMonth()
     );
     
-    // Если текущий месяц найден, используем его индекс, иначе используем первый месяц
+    // If target month is found, use its index, otherwise use first month
     const indexToUse = foundIndex >= 0 ? foundIndex : 0;
     setCurrentMonthIndex(indexToUse);
-  }, [generateMonths]);
+  }, [generateMonths, selectedRange.start]);
 
   // Virtual calendar integration
   const virtual = useVirtualCalendar({
@@ -201,10 +211,10 @@ const getWeeksInMonth = (days: TCalendarDay[]):TCalendarWeek[] => {
     if (visibleMonths.length > 0 && currentMonthIndex >= 0 && !hasScrolledToInitial.current) {
       hasScrolledToInitial.current = true;
       
-      // Используем scrollToIndex для точного позиционирования
+      // Use scrollToIndex for precise positioning
       virtual.virtualizer.scrollToIndex(currentMonthIndex, { align: 'start' });
       
-      // Показать календарь после задержки для завершения измерений
+      // Show calendar after delay to complete measurements
       setTimeout(() => {
         setIsInitialized(true);
       }, 100);
@@ -324,25 +334,25 @@ const getWeeksInMonth = (days: TCalendarDay[]):TCalendarWeek[] => {
       
       const ranges: import('../types').IRangeSegment[] = [];
       
-      // Проходим по всем видимым месяцам
+      // Iterate through all visible months
       visibleMonths.forEach((month, monthIndex) => {
         const monthStart = new Date(month.year, month.month, 1);
         const monthEnd = new Date(month.year, month.month + 1, 0);
         
-        // Проверяем, пересекается ли диапазон с этим месяцем
+        // Check if range intersects with this month
         if (endDate < monthStart || startDate > monthEnd) return;
         
         const segmentStart = startDate > monthStart ? startDate : monthStart;
         const segmentEnd = endDate < monthEnd ? endDate : monthEnd;
         
-        // Находим позицию первого дня месяца в сетке
+        // Find position of first day of month in grid
         let firstDayOfWeek = monthStart.getDay();
         if (weekStartsOn === 1) {
           firstDayOfWeek = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
         }
         
-        // Разбиваем сегмент по неделям (строкам)
-        // Проходим день за днем и группируем по неделям
+        // Split segment by weeks (rows)
+        // Go day by day and group by weeks
         const weekSegments: Array<{
           startRow: number;
           endRow: number;
@@ -368,7 +378,7 @@ const getWeeksInMonth = (days: TCalendarDay[]):TCalendarWeek[] => {
           const col = posInGrid % 7;
           
           if (!currentWeekSegment || currentWeekSegment.endRow !== row) {
-            // Начинаем новый сегмент недели
+            // Start new week segment
             if (currentWeekSegment) {
               weekSegments.push(currentWeekSegment);
             }
@@ -380,7 +390,7 @@ const getWeeksInMonth = (days: TCalendarDay[]):TCalendarWeek[] => {
               dates: [new Date(d)]
             };
           } else {
-            // Продолжаем текущий сегмент недели
+            // Continue current week segment
             currentWeekSegment.endCol = col;
             currentWeekSegment.dates.push(new Date(d));
           }
@@ -390,7 +400,7 @@ const getWeeksInMonth = (days: TCalendarDay[]):TCalendarWeek[] => {
           weekSegments.push(currentWeekSegment);
         }
         
-        // Создаем отдельные ranges для каждого сегмента недели
+        // Create separate ranges for each week segment
         weekSegments.forEach((weekSegment, weekIndex) => {
           const isFirstWeekSegment = weekIndex === 0 && segmentStart.getTime() === startDate.getTime();
           const isLastWeekSegment = weekIndex === weekSegments.length - 1 && segmentEnd.getTime() === endDate.getTime();
@@ -410,8 +420,7 @@ const getWeeksInMonth = (days: TCalendarDay[]):TCalendarWeek[] => {
       
       return {
         ranges,
-        gridWidth: 7,
-        cellSize: { width: 48, height: 48 } // Можно сделать конфигурируемым
+        cellSize: { width: 48, height: 48 } // Can be made configurable
       };
     }
   };

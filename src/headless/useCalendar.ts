@@ -289,6 +289,108 @@ export function useCalendar(props: ICalendarProps) {
         day: 'numeric'
       };
       return date.toLocaleDateString(locale, { ...defaultOptions, ...options });
+    },
+
+    getRangeGeometry: (): import('../types').IRangeGeometry | null => {
+      if (!selectedRange.start || internalSelectionMode === 'single') return null;
+      
+      const effectiveEnd = selectedRange.end || hoveredDate;
+      if (!effectiveEnd) return null;
+
+      const startDate = selectedRange.start < effectiveEnd ? selectedRange.start : effectiveEnd;
+      const endDate = selectedRange.start < effectiveEnd ? effectiveEnd : selectedRange.start;
+      
+      const ranges: import('../types').IRangeSegment[] = [];
+      
+      // Проходим по всем видимым месяцам
+      visibleMonths.forEach((month, monthIndex) => {
+        const monthStart = new Date(month.year, month.month, 1);
+        const monthEnd = new Date(month.year, month.month + 1, 0);
+        
+        // Проверяем, пересекается ли диапазон с этим месяцем
+        if (endDate < monthStart || startDate > monthEnd) return;
+        
+        const segmentStart = startDate > monthStart ? startDate : monthStart;
+        const segmentEnd = endDate < monthEnd ? endDate : monthEnd;
+        
+        // Находим позицию первого дня месяца в сетке
+        let firstDayOfWeek = monthStart.getDay();
+        if (weekStartsOn === 1) {
+          firstDayOfWeek = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
+        }
+        
+        // Разбиваем сегмент по неделям (строкам)
+        // Проходим день за днем и группируем по неделям
+        const weekSegments: Array<{
+          startRow: number;
+          endRow: number;
+          startCol: number;
+          endCol: number;
+          dates: Date[];
+        }> = [];
+        
+        let currentWeekSegment: {
+          startRow: number;
+          endRow: number;
+          startCol: number;
+          endCol: number;
+          dates: Date[];
+        } | null = null;
+        
+        for (let d = new Date(segmentStart); d <= segmentEnd; d.setDate(d.getDate() + 1)) {
+          if (d.getMonth() !== month.month) continue;
+          
+          const dayInMonth = d.getDate();
+          const posInGrid = firstDayOfWeek + dayInMonth - 1;
+          const row = Math.floor(posInGrid / 7);
+          const col = posInGrid % 7;
+          
+          if (!currentWeekSegment || currentWeekSegment.endRow !== row) {
+            // Начинаем новый сегмент недели
+            if (currentWeekSegment) {
+              weekSegments.push(currentWeekSegment);
+            }
+            currentWeekSegment = {
+              startRow: row,
+              endRow: row,
+              startCol: col,
+              endCol: col,
+              dates: [new Date(d)]
+            };
+          } else {
+            // Продолжаем текущий сегмент недели
+            currentWeekSegment.endCol = col;
+            currentWeekSegment.dates.push(new Date(d));
+          }
+        }
+        
+        if (currentWeekSegment) {
+          weekSegments.push(currentWeekSegment);
+        }
+        
+        // Создаем отдельные ranges для каждого сегмента недели
+        weekSegments.forEach((weekSegment, weekIndex) => {
+          const isFirstWeekSegment = weekIndex === 0 && segmentStart.getTime() === startDate.getTime();
+          const isLastWeekSegment = weekIndex === weekSegments.length - 1 && segmentEnd.getTime() === endDate.getTime();
+          
+          ranges.push({
+            monthIndex,
+            startRow: weekSegment.startRow,
+            endRow: weekSegment.endRow,
+            startCol: weekSegment.startCol,
+            endCol: weekSegment.endCol,
+            isFirstSegment: isFirstWeekSegment,
+            isLastSegment: isLastWeekSegment,
+            dates: weekSegment.dates
+          });
+        });
+      });
+      
+      return {
+        ranges,
+        gridWidth: 7,
+        cellSize: { width: 48, height: 48 } // Можно сделать конфигурируемым
+      };
     }
   };
 

@@ -14,7 +14,9 @@ export type {
   ICalendarHelpers,
   ICalendarRenderProps,
   ICalendarMonth,
-  TVirtualItem
+  TVirtualItem,
+  IRangeGeometry,
+  IRangeSegment
 } from './types';
 
 export { 

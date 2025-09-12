@@ -78,6 +78,25 @@ export interface ICalendarHelpers {
   isToday: (date: Date | null) => boolean;
   getDaysInRange: () => number;
   formatDate: (date: Date, options?: Intl.DateTimeFormatOptions) => string;
+  // Геометрическая информация для SVG масок
+  getRangeGeometry: () => IRangeGeometry | null;
+}
+
+export interface IRangeGeometry {
+  ranges: IRangeSegment[];
+  gridWidth: number; // количество колонок (дней в неделе)
+  cellSize: { width: number; height: number };
+}
+
+export interface IRangeSegment {
+  monthIndex: number;
+  startRow: number;
+  endRow: number;
+  startCol: number;
+  endCol: number;
+  isFirstSegment: boolean;
+  isLastSegment: boolean;
+  dates: Date[];
 }
 
 export interface ICalendarProps {

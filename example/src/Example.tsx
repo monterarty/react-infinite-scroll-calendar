@@ -3,6 +3,7 @@ import {
   Calendar,
   IDateRange
 } from 'react-infinite-scroll-calendar';
+import { RangeMask } from './RangeMask';
 
 const cn = (...classes: Array<string | undefined | null | false>) => {
   return classes.filter(Boolean).join(' ');
@@ -11,6 +12,7 @@ const cn = (...classes: Array<string | undefined | null | false>) => {
 const Example: React.FC = () => {
   const [selectedRange, setSelectedRange] = useState<IDateRange>({ start: null, end: null });
   const [weekStartsOn, setWeekStartsOn] = useState(1);
+  const [showRangeMask, setShowRangeMask] = useState(true); // Переключатель для маски
 
   const commonProps = {
     value: selectedRange,
@@ -108,7 +110,8 @@ const Example: React.FC = () => {
               </Calendar.Weekdays>
 
               <Calendar.Grid className="h-80">
-                {({ months, virtual }) => (
+                {({ months, virtual, helpers }) => {
+                  return (
                     <div style={{ height: virtual.totalSize, position: 'relative', width: '100%' }}>
                       {virtual.virtualItems.map((virtualItem) => {
                         const month = months[virtualItem.index];
@@ -131,17 +134,32 @@ const Example: React.FC = () => {
                           }}
                         >
                           <Calendar.Month month={month}>
-                            {({ month: monthData }) => (
-                              <div className="p-2 min-h-fit">
-                                <div className="text-center mb-3">
-                                  <div className="font-bold text-gray-800 text-xl">
-                                    {monthData.monthName}
+                            {({ month: monthData }) => {
+                              const rangeGeometry = helpers.getRangeGeometry();
+                              const monthRanges = rangeGeometry?.ranges.filter(r => r.monthIndex === virtualItem.index) || [];
+                              
+                              return (
+                                <div className="p-2 min-h-fit">
+                                  <div className="text-center mb-3">
+                                    <div className="font-bold text-gray-800 text-xl">
+                                      {monthData.monthName}
+                                    </div>
+                                    <div className="text-sm text-gray-500 font-medium">
+                                      {monthData.monthYear}
+                                    </div>
                                   </div>
-                                  <div className="text-sm text-gray-500 font-medium">
-                                    {monthData.monthYear}
-                                  </div>
-                                </div>
-                                <div className="grid grid-cols-7 gap-1 pb-2">
+                                  <div className="grid grid-cols-7 pb-2 relative">
+                                  {/* SVG маска для этого месяца (опционально) */}
+                                    {showRangeMask && monthRanges.length > 0 && (
+                                      <RangeMask
+                                          className="z-40"
+                                        geometry={{
+                                          ranges: monthRanges,
+                                          gridWidth: 7,
+                                          cellSize: { width: 48, height: 48 }
+                                        }} 
+                                      />
+                                    )}
                                   {monthData.days.map((day, dayIdx) => (
                                     <Calendar.Day 
                                       key={dayIdx} 
@@ -150,10 +168,10 @@ const Example: React.FC = () => {
                                         'h-12 min-h-[48px] max-h-[48px] w-full rounded-lg border-0 text-sm font-medium transition-colors duration-200 flex items-center justify-center',
                                         'hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-400',
                                         'data-[disabled]:opacity-30 data-[disabled]:cursor-not-allowed data-[disabled]:hover:bg-transparent',
-                                        'data-[selected]:bg-gradient-to-br data-[selected]:from-purple-500 data-[selected]:to-blue-500 data-[selected]:text-white data-[selected]:hover:bg-gradient-to-br data-[selected]:hover:from-purple-600 data-[selected]:hover:to-blue-600',
-                                        'data-[in-range]:bg-gradient-to-r data-[in-range]:from-purple-100 data-[in-range]:to-blue-100',
-                                        'data-[range-start]:bg-gradient-to-br data-[range-start]:from-green-600 data-[range-start]:to-purple-600 data-[range-start]:text-white data-[range-start]:font-bold data-[range-start]:ring-2 data-[range-start]:ring-green-400',
-                                        'data-[range-end]:bg-gradient-to-br data-[range-end]:from-purple-600 data-[range-end]:to-red-600 data-[range-end]:text-white data-[range-end]:font-bold data-[range-end]:ring-2 data-[range-end]:ring-red-400',
+                                        'data-[selected]:bg-gradient-to-br data-[selected]:from-purple-500 data-[selected]:to-blue-500 data-[selected]:text-white data-[selected]:hover:bg-gradient-to-br data-[selected]:hover:from-purple-600 data-[selected]:hover:to-blue-600 data-[selected]:z-10 data-[selected]:relative',
+                                        'data-[in-range]:bg-gradient-to-r data-[in-range]:from-purple-100 data-[in-range]:to-blue-100 data-[in-range]:z-10 data-[in-range]:relative',
+                                        'data-[range-start]:bg-gradient-to-br data-[range-start]:from-green-600 data-[range-start]:to-purple-600 data-[range-start]:text-white data-[range-start]:font-bold data-[range-start]:ring-2 data-[range-start]:ring-green-400 data-[range-start]:z-10 data-[range-start]:relative',
+                                        'data-[range-end]:bg-gradient-to-br data-[range-end]:from-purple-600 data-[range-end]:to-red-600 data-[range-end]:text-white data-[range-end]:font-bold data-[range-end]:ring-2 data-[range-end]:ring-red-400 data-[range-end]:z-10 data-[range-end]:relative',
                                         'data-[today]:ring-2 data-[today]:ring-yellow-400 data-[today]:bg-yellow-50'
                                       )}
                                     >
@@ -162,13 +180,15 @@ const Example: React.FC = () => {
                                   ))}
                                 </div>
                               </div>
-                            )}
+                            );
+                            }}
                           </Calendar.Month>
                         </div>
                       );
                     })}
                   </div>
-                )}
+                  );
+                }}
               </Calendar.Grid>
 
               <Calendar.SelectionInfo className="bg-gradient-to-r from-gray-50 to-blue-50 p-4 border-t">

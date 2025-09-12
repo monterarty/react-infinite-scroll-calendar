@@ -1,4 +1,4 @@
-import React, { createContext, useContext, forwardRef } from 'react';
+import React, { createContext, useContext, forwardRef, useLayoutEffect, useState, useRef } from 'react';
 import { Virtualizer } from '@tanstack/react-virtual';
 import { useCalendar } from '../headless';
 import { ICalendarProps, ICalendarRenderProps, ICalendarMonth, TVirtualItem, ICalendarState, ICalendarActions, ICalendarHelpers, IDateRange } from '../types';
@@ -178,6 +178,7 @@ interface CalendarGridProps {
       totalSize: number;
       virtualizer?: Virtualizer<HTMLDivElement, Element>;
     };
+    gridWidth: number;
   }>;
   className?: string;
 }
@@ -185,6 +186,29 @@ interface CalendarGridProps {
 const CalendarGrid = forwardRef<HTMLDivElement, CalendarGridProps>(
   ({ className, children }, ref) => {
     const context = useCalendarContext();
+    const gridRef = useRef<HTMLDivElement>(null);
+    const [gridWidth, setGridWidth] = useState<number>(0);
+    
+    useLayoutEffect(() => {
+      const measureWidth = () => {
+        if (gridRef.current) {
+          const width = gridRef.current.getBoundingClientRect().width;
+          setGridWidth(width);
+        }
+      };
+      
+      measureWidth();
+      
+      const resizeObserver = new ResizeObserver(measureWidth);
+      
+      if (gridRef.current) {
+        resizeObserver.observe(gridRef.current);
+      }
+      
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }, []);
     
     const gridProps = {
       months: context.state.visibleMonths,
@@ -195,16 +219,33 @@ const CalendarGrid = forwardRef<HTMLDivElement, CalendarGridProps>(
         virtualItems: context.virtual.virtualItems,
         totalSize: context.virtual.totalSize,
         virtualizer: context.virtual.virtualizer
-      }
+      },
+      gridWidth
     };
 
     const content = typeof children === 'function' ? children(gridProps) : children;
+    const containerProps = context.props.containerProps || {};
+    const containerRef = 'ref' in containerProps ? containerProps.ref : null;
+    const { ref: _containerRef, ...otherContainerProps } = containerProps as { ref?: React.RefObject<HTMLDivElement>; [key: string]: unknown };
+    
     return (
       <div
-        ref={ref}
+        ref={(node) => {
+          (gridRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+
+          if (typeof ref === 'function') {
+            ref(node);
+          } else if (ref) {
+            (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+          }
+
+          if (containerRef && typeof containerRef === 'object' && 'current' in containerRef) {
+            (containerRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+          }
+        }}
         className={cn('calendar-grid', className)}
         data-calendar-grid=""
-        {...context.props.containerProps}
+        {...otherContainerProps}
         style={{ overflow: 'auto', position: 'relative' }}
       >
         <div 
